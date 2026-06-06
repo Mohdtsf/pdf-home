@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Download, X } from "lucide-react";
+import { AdBanner } from "./AdBanner";
 
 interface PreDownloadAdProps {
   onComplete: () => void;
@@ -38,12 +39,9 @@ export function PreDownloadAd({ onComplete, onCancel }: PreDownloadAdProps) {
         <div className="p-8 text-center space-y-6">
           <h3 className="text-2xl font-bold font-heading">Your file is ready!</h3>
           
-          {/* AdSense Placeholder */}
-          <div className="bg-slate-50 dark:bg-slate-950 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl h-[250px] flex flex-col items-center justify-center shadow-inner">
-            <span className="text-[var(--color-text-muted)] mb-2">Advertisement</span>
-            <div className="text-sm text-[var(--color-text-secondary)] max-w-sm px-4">
-              (AdSense unit will appear here. The layout is reserved to prevent CLS.)
-            </div>
+          {/* Real AdSense unit or dev placeholder */}
+          <div className="min-h-[250px] flex items-center justify-center">
+            <AdBanner slot="pre-download" format="rectangle" responsive={false} className="w-full" />
           </div>
 
           <div className="flex flex-col items-center justify-center pt-4">

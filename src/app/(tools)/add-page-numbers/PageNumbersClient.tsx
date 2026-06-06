@@ -2,6 +2,9 @@
 
 import { useState, useCallback } from "react";
 import { Hash, Download, Loader2, FileText, LayoutGrid, Check } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
+import { ProcessingOverlay } from "@/components/ui/ProcessingOverlay";
+import { PreDownloadAd } from "@/components/ads/PreDownloadAd";
 import { ToolPageLayout } from "@/components/layout/ToolPageLayout";
 import { PdfDropzone, type PdfFile } from "@/components/pdf/PdfDropzone";
 import { addPageNumbers, type NumberPosition, type NumberFormat } from "@/lib/pdf/pageNumbers";
@@ -44,6 +47,9 @@ export function PageNumbersClient() {
   const [selectedColor, setSelectedColor] = useState(PRESET_COLORS[0]);
 
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showAd, setShowAd] = useState(false);
+  const [resultData, setResultData] = useState<any>(null);
+  const [downloadFilename, setDownloadFilename] = useState<string>('');
 
   const handleFilesAdded = useCallback(async (files: PdfFile[]) => {
     const pdfFile = files[0];
@@ -59,6 +65,7 @@ export function PageNumbersClient() {
   const handleApplyPageNumbers = useCallback(async () => {
     if (!file) return;
     setIsProcessing(true);
+    trackEvent({ name: "tool_used", tool: "add-page-numbers" });
 
     try {
       const result = await addPageNumbers(file.buffer, {
@@ -70,7 +77,9 @@ export function PageNumbersClient() {
         color: selectedColor.rgb,
       });
 
-      downloadFile(result, "numbered.pdf");
+      setResultData(result);
+      setDownloadFilename("numbered.pdf");
+      setShowAd(true);
     } catch (err) {
       console.error("Numbering failed:", err);
       alert("Failed to apply page numbers. Please try again.");
@@ -84,6 +93,20 @@ export function PageNumbersClient() {
     setPageCount(0);
   }, []);
 
+  const handleAdComplete = useCallback(() => {
+    trackEvent({ name: "download_completed", tool: "add-page-numbers" });
+    setShowAd(false);
+    if (resultData && downloadFilename) {
+      setResultData(resultData);
+      setDownloadFilename(downloadFilename);
+      setShowAd(true);
+    }
+  }, [resultData, downloadFilename]);
+
+  const handleAdCancel = useCallback(() => {
+    setShowAd(false);
+  }, []);
+
   return (
     <ToolPageLayout
       title="Add Page Numbers"
@@ -91,6 +114,8 @@ export function PageNumbersClient() {
       icon={Hash}
       iconGradient="icon-circle-sort"
     >
+      {isProcessing && <ProcessingOverlay />}
+      {showAd && <PreDownloadAd onComplete={handleAdComplete} onCancel={handleAdCancel} />}
       {!file ? (
         <PdfDropzone
           onFilesAdded={handleFilesAdded}

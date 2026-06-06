@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { Scissors, Download, Loader2, FileText } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
+import { ProcessingOverlay } from "@/components/ui/ProcessingOverlay";
 import { ToolPageLayout } from "@/components/layout/ToolPageLayout";
 import { PdfDropzone, type PdfFile } from "@/components/pdf/PdfDropzone";
 import type { SplitOptions } from "@/lib/pdf/split";
@@ -97,6 +99,7 @@ export function SplitPdfClient() {
   const handleSplit = useCallback(async () => {
     if (!file) return;
     setIsProcessing(true);
+    trackEvent({ name: "tool_used", tool: "split-pdf" });
 
     try {
       let options: SplitOptions;
@@ -156,6 +159,8 @@ export function SplitPdfClient() {
       icon={Scissors}
       iconGradient="icon-circle-organize"
     >
+      {isProcessing && <ProcessingOverlay />}
+      {showAd && <PreDownloadAd onComplete={handleAdComplete} onCancel={handleAdCancel} />}
       {showAd && (
         <PreDownloadAd onComplete={handleAdComplete} onCancel={handleAdCancel} />
       )}
@@ -184,7 +189,7 @@ export function SplitPdfClient() {
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg active:scale-95 ${
                   splitMode === mode.key
                     ? "bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white shadow-[#667eea]/20"
-                    : "bg-white/5 text-[var(--color-text-secondary)] hover:bg-white/10 hover:text-white"
+                    : "bg-[var(--color-bg-base)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-surface-hover)] hover:text-[var(--color-text-primary)] border border-[var(--color-border-glass)]"
                 }`}
               >
                 {mode.label}
@@ -235,7 +240,7 @@ export function SplitPdfClient() {
                 max={pageCount}
                 value={rangeFrom}
                 onChange={(e) => setRangeFrom(Number(e.target.value))}
-                className="w-20 px-3 py-2 rounded-lg bg-black/20 border border-[var(--color-border-glass)] text-[var(--color-text-primary)] text-sm focus:border-[#667eea] focus:outline-none transition-colors"
+                className="w-20 px-3 py-2 rounded-lg bg-[var(--color-bg-base)] border border-[var(--color-border-glass)] text-[var(--color-text-primary)] text-sm focus:border-[#667eea] focus:outline-none transition-colors"
               />
               <label className="text-sm text-[var(--color-text-secondary)]">to</label>
               <input
@@ -244,7 +249,7 @@ export function SplitPdfClient() {
                 max={pageCount}
                 value={rangeTo}
                 onChange={(e) => setRangeTo(Number(e.target.value))}
-                className="w-20 px-3 py-2 rounded-lg bg-black/20 border border-[var(--color-border-glass)] text-[var(--color-text-primary)] text-sm focus:border-[#667eea] focus:outline-none transition-colors"
+                className="w-20 px-3 py-2 rounded-lg bg-[var(--color-bg-base)] border border-[var(--color-border-glass)] text-[var(--color-text-primary)] text-sm focus:border-[#667eea] focus:outline-none transition-colors"
               />
               <span className="text-xs text-[var(--color-text-muted)]">of {pageCount}</span>
             </div>
@@ -259,7 +264,7 @@ export function SplitPdfClient() {
                 max={pageCount}
                 value={everyN}
                 onChange={(e) => setEveryN(Number(e.target.value))}
-                className="w-20 px-3 py-2 rounded-lg bg-black/20 border border-[var(--color-border-glass)] text-[var(--color-text-primary)] text-sm focus:border-[#667eea] focus:outline-none transition-colors"
+                className="w-20 px-3 py-2 rounded-lg bg-[var(--color-bg-base)] border border-[var(--color-border-glass)] text-[var(--color-text-primary)] text-sm focus:border-[#667eea] focus:outline-none transition-colors"
               />
               <label className="text-sm text-[var(--color-text-secondary)]">pages</label>
               <span className="text-xs text-[var(--color-text-muted)]">

@@ -2,6 +2,9 @@
 
 import { useState, useCallback } from "react";
 import { ShieldAlert, Download, Loader2, FileText, Lock, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
+import { ProcessingOverlay } from "@/components/ui/ProcessingOverlay";
+import { PreDownloadAd } from "@/components/ads/PreDownloadAd";
 import { ToolPageLayout } from "@/components/layout/ToolPageLayout";
 import { PdfDropzone, type PdfFile } from "@/components/pdf/PdfDropzone";
 import { protectPdf } from "@/lib/pdf/protect";
@@ -12,6 +15,9 @@ export function ProtectPdfClient() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showAd, setShowAd] = useState(false);
+  const [resultData, setResultData] = useState<any>(null);
+  const [downloadFilename, setDownloadFilename] = useState<string>('');
 
   const handleFilesAdded = useCallback(async (files: PdfFile[]) => {
     setFile(files[0]);
@@ -20,6 +26,7 @@ export function ProtectPdfClient() {
   const handleProtectPdf = useCallback(async () => {
     if (!file || !password) return;
     setIsProcessing(true);
+    trackEvent({ name: "tool_used", tool: "protect-pdf" });
 
     try {
       const result = await protectPdf(file.buffer, password);
@@ -37,6 +44,20 @@ export function ProtectPdfClient() {
     setPassword("");
   }, []);
 
+  const handleAdComplete = useCallback(() => {
+    trackEvent({ name: "download_completed", tool: "protect-pdf" });
+    setShowAd(false);
+    if (resultData && downloadFilename) {
+      setResultData(resultData);
+      setDownloadFilename(downloadFilename);
+      setShowAd(true);
+    }
+  }, [resultData, downloadFilename]);
+
+  const handleAdCancel = useCallback(() => {
+    setShowAd(false);
+  }, []);
+
   return (
     <ToolPageLayout
       title="Protect PDF"
@@ -44,6 +65,8 @@ export function ProtectPdfClient() {
       icon={Lock}
       iconGradient="icon-circle-security"
     >
+      {isProcessing && <ProcessingOverlay />}
+      {showAd && <PreDownloadAd onComplete={handleAdComplete} onCancel={handleAdCancel} />}
       {!file ? (
         <PdfDropzone
           onFilesAdded={handleFilesAdded}

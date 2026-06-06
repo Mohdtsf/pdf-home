@@ -2,6 +2,9 @@
 
 import { useState, useCallback } from "react";
 import { Type, Download, Loader2, FileText } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
+import { ProcessingOverlay } from "@/components/ui/ProcessingOverlay";
+import { PreDownloadAd } from "@/components/ads/PreDownloadAd";
 import { ToolPageLayout } from "@/components/layout/ToolPageLayout";
 import { PdfDropzone, type PdfFile } from "@/components/pdf/PdfDropzone";
 import { addTextToPdf, type TextAnnotation } from "@/lib/pdf/addText";
@@ -29,6 +32,9 @@ export function AddTextClient() {
   const [posY, setPosY] = useState(10);
   const [applyAll, setApplyAll] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showAd, setShowAd] = useState(false);
+  const [resultData, setResultData] = useState<any>(null);
+  const [downloadFilename, setDownloadFilename] = useState<string>('');
 
   const handleFilesAdded = useCallback(async (files: PdfFile[]) => {
     const pdfFile = files[0];
@@ -40,6 +46,7 @@ export function AddTextClient() {
   const handleApply = useCallback(async () => {
     if (!file || !text.trim()) return;
     setIsProcessing(true);
+    trackEvent({ name: "tool_used", tool: "add-text-to-pdf" });
 
     try {
       const color = PRESET_COLORS[colorIdx];
@@ -54,7 +61,9 @@ export function AddTextClient() {
       }
 
       const result = await addTextToPdf(file.buffer, annotations);
-      downloadFile(result, "text-added.pdf");
+      setResultData(result);
+      setDownloadFilename("text-added.pdf");
+      setShowAd(true);
     } catch (err) {
       console.error("Add text failed:", err);
       alert("Failed to add text. Please try again.");
@@ -68,6 +77,20 @@ export function AddTextClient() {
     setPageCount(0);
   }, []);
 
+  const handleAdComplete = useCallback(() => {
+    trackEvent({ name: "download_completed", tool: "add-text-to-pdf" });
+    setShowAd(false);
+    if (resultData && downloadFilename) {
+      setResultData(resultData);
+      setDownloadFilename(downloadFilename);
+      setShowAd(true);
+    }
+  }, [resultData, downloadFilename]);
+
+  const handleAdCancel = useCallback(() => {
+    setShowAd(false);
+  }, []);
+
   return (
     <ToolPageLayout
       title="Add Text"
@@ -75,6 +98,8 @@ export function AddTextClient() {
       icon={Type}
       iconGradient="icon-circle-edit"
     >
+      {isProcessing && <ProcessingOverlay />}
+      {showAd && <PreDownloadAd onComplete={handleAdComplete} onCancel={handleAdCancel} />}
       {!file ? (
         <PdfDropzone onFilesAdded={handleFilesAdded} multiple={false} label="Drop your PDF file here" sublabel="Select a PDF to add text" />
       ) : (

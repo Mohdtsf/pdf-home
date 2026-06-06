@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { RotateCw, Download, Loader2, FileText, RotateCcw } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
+import { ProcessingOverlay } from "@/components/ui/ProcessingOverlay";
 import { ToolPageLayout } from "@/components/layout/ToolPageLayout";
 import { PdfDropzone, type PdfFile } from "@/components/pdf/PdfDropzone";
 import type { RotationAngle, PageRotation } from "@/lib/pdf/rotate";
@@ -130,6 +132,7 @@ export function RotatePdfClient() {
     const isCustomOrder = pageOrder.some((val, i) => val !== i);
     if (!file || (pageRotations.size === 0 && !isCustomOrder)) return;
     setIsProcessing(true);
+    trackEvent({ name: "tool_used", tool: "rotate-pdf" });
 
     try {
       const rotations: PageRotation[] = Array.from(pageRotations.entries()).map(
@@ -153,6 +156,7 @@ export function RotatePdfClient() {
   }, [file, pageRotations, runTask]);
 
   const handleAdComplete = useCallback(() => {
+    trackEvent({ name: "download_completed", tool: "rotate-pdf" });
     if (resultBuffer) {
       downloadFile(resultBuffer, "rotated.pdf");
     }
@@ -184,6 +188,8 @@ export function RotatePdfClient() {
       icon={RotateCw}
       iconGradient="icon-circle-organize"
     >
+      {isProcessing && <ProcessingOverlay />}
+      {showAd && <PreDownloadAd onComplete={handleAdComplete} onCancel={handleAdCancel} />}
       {showAd && (
         <PreDownloadAd onComplete={handleAdComplete} onCancel={handleAdCancel} />
       )}
@@ -200,16 +206,16 @@ export function RotatePdfClient() {
           <FileInfoBanner file={file} pageCount={pageCount} onReset={handleReset} />
 
           {/* Bulk Actions */}
-          <div className="flex flex-col gap-3 glass-card p-4 rounded-xl border border-white/5">
+          <div className="flex flex-col gap-3 glass-card p-4 rounded-xl border border-[var(--color-border-glass)]">
             <div className="flex flex-wrap items-center gap-3">
-              <span className="text-sm font-medium text-white mr-2">
+              <span className="text-sm font-medium text-[var(--color-text-primary)] mr-2">
                 {selectedPages.size > 0 ? `Rotate ${selectedPages.size} selected:` : "Rotate all pages:"}
               </span>
               {([90, 180, 270] as RotationAngle[]).map((angle) => (
                 <button
                   key={angle}
                   onClick={() => rotateSelectedOrAll(angle)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/5 text-[var(--color-text-secondary)] hover:bg-white/10 hover:text-white transition-all duration-300 hover:-translate-y-0.5 active:scale-95"
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--color-bg-base)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-surface-hover)] hover:text-[var(--color-text-primary)] border border-[var(--color-border-glass)] transition-all duration-300 hover:-translate-y-0.5 active:scale-95"
                 >
                   {angle}° CW
                 </button>
@@ -217,7 +223,7 @@ export function RotatePdfClient() {
               <div className="ml-auto flex items-center gap-2">
                 <button
                   onClick={selectedPages.size === pageCount ? clearSelection : selectAll}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/5 text-[var(--color-text-secondary)] hover:bg-white/10 hover:text-white transition-all duration-300 hover:-translate-y-0.5 active:scale-95"
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--color-bg-base)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-surface-hover)] hover:text-[var(--color-text-primary)] border border-[var(--color-border-glass)] transition-all duration-300 hover:-translate-y-0.5 active:scale-95"
                 >
                   {selectedPages.size === pageCount ? "Deselect All" : "Select All"}
                 </button>
@@ -254,10 +260,10 @@ export function RotatePdfClient() {
                         <div className="flex items-center justify-between mt-2">
                           <button
                             onClick={() => rotatePageBy(originalIndex, 270)}
-                            className="p-1.5 rounded hover:bg-white/10 transition-colors hover:text-white"
+                            className="p-1.5 rounded hover:bg-[var(--color-bg-surface-hover)] transition-colors hover:text-[var(--color-text-primary)]"
                             aria-label={`Rotate page ${pageNum} counter-clockwise`}
                           >
-                            <RotateCcw className="w-4 h-4 text-[var(--color-text-secondary)] hover:text-white" />
+                            <RotateCcw className="w-4 h-4 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]" />
                           </button>
 
                           <span className="text-xs font-medium text-[var(--color-text-secondary)]">
@@ -266,10 +272,10 @@ export function RotatePdfClient() {
 
                           <button
                             onClick={() => rotatePageBy(originalIndex, 90)}
-                            className="p-1.5 rounded hover:bg-white/10 transition-colors hover:text-white"
+                            className="p-1.5 rounded hover:bg-[var(--color-bg-surface-hover)] transition-colors hover:text-[var(--color-text-primary)]"
                             aria-label={`Rotate page ${pageNum} clockwise`}
                           >
-                            <RotateCw className="w-4 h-4 text-[var(--color-text-secondary)] hover:text-white" />
+                            <RotateCw className="w-4 h-4 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]" />
                           </button>
                         </div>
                       }

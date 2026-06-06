@@ -35,7 +35,7 @@ export function FilePreviewCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`relative rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md p-3 glass-card hover:-translate-y-1 hover:shadow-xl hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300 group flex flex-col ${
+      className={`relative rounded-xl border border-[var(--color-border-glass)] bg-[var(--glass-bg)] backdrop-blur-md p-3 glass-card hover:-translate-y-1 hover:shadow-xl hover:border-[var(--color-border-glass-hover)] transition-all duration-300 group flex flex-col ${
         isDragging ? "ring-2 ring-indigo-500/50 shadow-2xl scale-105" : ""
       }`}
     >
@@ -50,7 +50,7 @@ export function FilePreviewCard({
       </button>
 
       {/* Thumbnail */}
-      <div className="aspect-[3/4] rounded-lg overflow-hidden mb-3 border border-slate-100 dark:border-slate-800 group-hover:border-slate-200 dark:group-hover:border-slate-700 transition-colors relative flex-shrink-0 bg-slate-50 dark:bg-slate-950">
+      <div className="aspect-[3/4] rounded-lg overflow-hidden mb-3 border border-[var(--color-border-glass)] group-hover:border-[var(--color-border-glass-hover)] transition-colors relative flex-shrink-0 bg-[var(--color-bg-base)]">
         <PdfThumbnail buffer={file.buffer} className="w-full h-full" />
       </div>
       
@@ -64,7 +64,7 @@ export function FilePreviewCard({
           <button
             {...attributes}
             {...listeners}
-            className="p-1 rounded cursor-grab active:cursor-grabbing bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors border border-slate-200/40 dark:border-slate-700/40"
+            className="p-1 rounded cursor-grab active:cursor-grabbing bg-[var(--color-bg-surface-hover)] hover:bg-[var(--color-border-glass-hover)] text-[var(--color-text-secondary)] hover:text-indigo-600 transition-colors border border-[var(--color-border-glass)]"
             title="Drag to reorder"
           >
             <GripVertical className="w-4 h-4" />

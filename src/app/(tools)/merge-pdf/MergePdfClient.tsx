@@ -2,6 +2,8 @@
 
 import { useState, useCallback } from "react";
 import { Merge, Download, Plus, Loader2 } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
+import { ProcessingOverlay } from "@/components/ui/ProcessingOverlay";
 import { ToolPageLayout } from "@/components/layout/ToolPageLayout";
 import { PdfDropzone, type PdfFile } from "@/components/pdf/PdfDropzone";
 import { FilePreviewCard } from "@/components/pdf/FilePreviewCard";
@@ -67,6 +69,7 @@ export function MergePdfClient() {
   const handleMerge = useCallback(async () => {
     if (files.length < 2) return;
     setIsProcessing(true);
+    trackEvent({ name: "tool_used", tool: "merge-pdf" });
 
     try {
       const buffers = files.map((f) => f.buffer);
@@ -82,6 +85,7 @@ export function MergePdfClient() {
   }, [files, runTask]);
 
   const handleAdComplete = useCallback(() => {
+    trackEvent({ name: "download_completed", tool: "merge-pdf" });
     if (resultBuffer) {
       downloadFile(resultBuffer, "merged.pdf");
       setIsDone(true);
@@ -105,6 +109,8 @@ export function MergePdfClient() {
       icon={Merge}
       iconGradient="icon-circle-organize"
     >
+      {isProcessing && <ProcessingOverlay />}
+      {showAd && <PreDownloadAd onComplete={handleAdComplete} onCancel={handleAdCancel} />}
       {showAd && (
         <PreDownloadAd onComplete={handleAdComplete} onCancel={handleAdCancel} />
       )}

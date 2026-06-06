@@ -155,8 +155,8 @@ export function SignatureCanvas({ onSignatureChange, width = 500, height = 200 }
         )}
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="flex gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+        <div className="flex gap-2 items-center">
           {PEN_COLORS.map((c) => (
             <button
               key={c}
@@ -172,8 +172,29 @@ export function SignatureCanvas({ onSignatureChange, width = 500, height = 200 }
               style={{ background: c }}
             />
           ))}
+          <div className="w-px h-6 bg-[var(--color-border-glass)] mx-1" />
+          
+          <div 
+            className="relative rounded-full border-2 overflow-hidden w-7 h-7 flex items-center justify-center cursor-pointer transition-all" 
+            style={{ borderColor: !PEN_COLORS.includes(penColor) ? "#6366f1" : "border-gray-300" }}
+            title="Custom Color"
+          >
+            <input 
+              type="color" 
+              value={penColor} 
+              onChange={(e) => {
+                setPenColor(e.target.value);
+                const canvas = canvasRef.current;
+                if (canvas) {
+                  const ctx = canvas.getContext("2d");
+                  if (ctx) ctx.strokeStyle = e.target.value;
+                }
+              }}
+              className="absolute -top-2 -left-2 w-12 h-12 cursor-pointer"
+            />
+          </div>
         </div>
-        <div className="flex gap-2 ml-auto">
+        <div className="flex gap-2">
           <button
             onClick={handleUndo}
             disabled={!hasDrawn}

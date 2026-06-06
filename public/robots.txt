@@ -1,0 +1,13 @@
+# *
+User-agent: *
+Allow: /
+
+# *
+User-agent: *
+Disallow: /api/
+
+# Host
+Host: https://pdfhome.com
+
+# Sitemaps
+Sitemap: https://pdfhome.com/sitemap.xml

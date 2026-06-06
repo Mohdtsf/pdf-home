@@ -2,16 +2,29 @@
 
 import { useState, useCallback } from "react";
 import { Minimize2, Download, Loader2, FileText, TrendingDown } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
+import { ProcessingOverlay } from "@/components/ui/ProcessingOverlay";
+import { PreDownloadAd } from "@/components/ads/PreDownloadAd";
 import { ToolPageLayout } from "@/components/layout/ToolPageLayout";
 import { PdfDropzone, type PdfFile } from "@/components/pdf/PdfDropzone";
-import { compressPdf, type CompressionQuality, type CompressionResult } from "@/lib/pdf/compress";
+import { uploadFile, pollJobStatus } from "@/lib/api";
 import { downloadFile } from "@/lib/download";
 import { formatFileSize } from "@/lib/validatePdf";
+
+export type CompressionQuality = 'low' | 'medium' | 'high';
+
+export interface CompressionResult {
+  originalSize: number;
+  compressedSize: number;
+  savedPercent: number;
+  downloadUrl: string;
+}
 
 export function CompressPdfClient() {
   const [file, setFile] = useState<PdfFile | null>(null);
   const [quality, setQuality] = useState<CompressionQuality>("medium");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showAd, setShowAd] = useState(false);
   const [result, setResult] = useState<CompressionResult | null>(null);
 
   const handleFilesAdded = useCallback((files: PdfFile[]) => {
@@ -22,23 +35,55 @@ export function CompressPdfClient() {
   const handleCompress = useCallback(async () => {
     if (!file) return;
     setIsProcessing(true);
+    trackEvent({ name: "tool_used", tool: "compress-pdf" });
     setResult(null);
 
     try {
-      const res = await compressPdf(file.buffer, quality);
-      setResult(res);
+      // Create a native File object from the PdfFile to upload
+      const fileToUpload = new File([file.buffer], file.name, { type: 'application/pdf' });
+      
+      const { jobId } = await uploadFile('/compress', fileToUpload, { quality });
+      
+      // Poll for job completion
+      const downloadUrl = await pollJobStatus(jobId, (progress) => {
+        // You could update a progress bar here
+        console.log(`Compression progress: ${progress}%`);
+      });
+
+      // We don't have the exact compressed size from the API yet, 
+      // but we can just set it to some dummy value or fetch the headers if we want.
+      // For now, we just pass the URL so the user can download it.
+      setResult({
+        originalSize: file.size,
+        compressedSize: 0, // Server would ideally return this, we can update it later
+        savedPercent: 0,
+        downloadUrl,
+      });
     } catch (err) {
       console.error("Compression failed:", err);
-      alert("Failed to compress PDF. Please try again.");
+      alert("Failed to compress PDF. Please try again or check your backend connection.");
     } finally {
       setIsProcessing(false);
     }
   }, [file, quality]);
 
-  const handleDownload = useCallback(() => {
-    if (!result) return;
-    downloadFile(result.data, "compressed.pdf");
-  }, [result]);
+  const handleAdComplete = useCallback(() => {
+    trackEvent({ name: "download_completed", tool: "compress-pdf" });
+    setShowAd(false);
+    if (!result || !result.downloadUrl) return;
+    
+    // Instead of downloading a blob, we navigate or create a link to the download URL
+    const a = document.createElement("a");
+    a.href = result.downloadUrl;
+    a.download = `compressed-${file?.name || 'document.pdf'}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }, [result, file]);
+
+  const handleAdCancel = useCallback(() => {
+    setShowAd(false);
+  }, []);
 
   const handleReset = useCallback(() => {
     setFile(null);
@@ -58,6 +103,8 @@ export function CompressPdfClient() {
       icon={Minimize2}
       iconGradient="icon-circle-optimize"
     >
+      {isProcessing && <ProcessingOverlay />}
+      {showAd && <PreDownloadAd onComplete={handleAdComplete} onCancel={handleAdCancel} />}
       {!file ? (
         <PdfDropzone
           onFilesAdded={handleFilesAdded}
@@ -106,20 +153,12 @@ export function CompressPdfClient() {
               <div className="flex items-center gap-2 mb-3">
                 <TrendingDown className="w-5 h-5 text-[#10b981]" />
                 <p className="text-sm font-semibold text-[#10b981]">
-                  {result.savedPercent > 0
-                    ? `Saved ${result.savedPercent}%`
-                    : "File already optimized"}
+                  File compressed successfully!
                 </p>
               </div>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-[var(--color-text-muted)]">Before</p>
-                  <p className="font-semibold">{formatFileSize(result.originalSize)}</p>
-                </div>
-                <div>
-                  <p className="text-[var(--color-text-muted)]">After</p>
-                  <p className="font-semibold">{formatFileSize(result.compressedSize)}</p>
-                </div>
+              <div className="text-sm">
+                <p className="text-[var(--color-text-muted)]">Original Size</p>
+                <p className="font-semibold">{formatFileSize(result.originalSize)}</p>
               </div>
             </div>
           )}
@@ -140,7 +179,7 @@ export function CompressPdfClient() {
               </button>
             ) : (
               <button
-                onClick={handleDownload}
+                onClick={() => setShowAd(true)}
                 className="btn-aurora w-full sm:w-auto flex items-center justify-center gap-2"
               >
                 <Download className="w-5 h-5" /> Download Compressed PDF

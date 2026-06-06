@@ -2,6 +2,9 @@
 
 import { useState, useCallback } from "react";
 import { Image as ImageIcon, Download, Loader2, FileText } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
+import { ProcessingOverlay } from "@/components/ui/ProcessingOverlay";
+import { PreDownloadAd } from "@/components/ads/PreDownloadAd";
 import { ToolPageLayout } from "@/components/layout/ToolPageLayout";
 import { PdfDropzone, type PdfFile } from "@/components/pdf/PdfDropzone";
 import { pdfToImages, type ConvertedImage } from "@/lib/pdf/pdfToImages";
@@ -14,6 +17,9 @@ export function PdfToJpgClient() {
   const [quality, setQuality] = useState(85);
   const [scale, setScale] = useState(2);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showAd, setShowAd] = useState(false);
+  const [resultData, setResultData] = useState<any>(null);
+  const [downloadFilename, setDownloadFilename] = useState<string>('');
   const [progress, setProgress] = useState("");
   const [results, setResults] = useState<ConvertedImage[] | null>(null);
 
@@ -28,6 +34,7 @@ export function PdfToJpgClient() {
   const handleConvert = useCallback(async () => {
     if (!file) return;
     setIsProcessing(true);
+    trackEvent({ name: "tool_used", tool: "pdf-to-jpg" });
     setProgress("Converting pages...");
 
     try {
@@ -49,7 +56,9 @@ export function PdfToJpgClient() {
   const handleDownloadAll = useCallback(async () => {
     if (!results) return;
     if (results.length === 1) {
-      downloadFile(results[0].data, results[0].filename, "image/jpeg");
+      setResultData(results[0].data);
+      setDownloadFilename(results[0].filename);
+      setShowAd(true);
     } else {
       await downloadAsZip(
         results.map((r) => ({ filename: r.filename, data: r.data })),
@@ -64,6 +73,20 @@ export function PdfToJpgClient() {
     setResults(null);
   }, []);
 
+  const handleAdComplete = useCallback(() => {
+    trackEvent({ name: "download_completed", tool: "pdf-to-jpg" });
+    setShowAd(false);
+    if (resultData && downloadFilename) {
+      setResultData(resultData);
+      setDownloadFilename(downloadFilename);
+      setShowAd(true);
+    }
+  }, [resultData, downloadFilename]);
+
+  const handleAdCancel = useCallback(() => {
+    setShowAd(false);
+  }, []);
+
   return (
     <ToolPageLayout
       title="PDF to JPG"
@@ -71,6 +94,8 @@ export function PdfToJpgClient() {
       icon={ImageIcon}
       iconGradient="icon-circle-convert"
     >
+      {isProcessing && <ProcessingOverlay />}
+      {showAd && <PreDownloadAd onComplete={handleAdComplete} onCancel={handleAdCancel} />}
       {!file ? (
         <PdfDropzone
           onFilesAdded={handleFilesAdded}

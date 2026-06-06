@@ -2,6 +2,9 @@
 
 import { useState, useCallback } from "react";
 import { Unlock, Download, Loader2, FileText, Lock, Eye, EyeOff, CheckCircle2, AlertCircle } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
+import { ProcessingOverlay } from "@/components/ui/ProcessingOverlay";
+import { PreDownloadAd } from "@/components/ads/PreDownloadAd";
 import { ToolPageLayout } from "@/components/layout/ToolPageLayout";
 import { PdfDropzone, type PdfFile } from "@/components/pdf/PdfDropzone";
 import { unlockPdf } from "@/lib/pdf/unlock";
@@ -12,6 +15,7 @@ export function UnlockPdfClient() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showAd, setShowAd] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [unlockSuccess, setUnlockSuccess] = useState(false);
   const [unlockedData, setUnlockedData] = useState<Uint8Array | null>(null);
@@ -20,6 +24,7 @@ export function UnlockPdfClient() {
     const pdfFile = files[0];
     setFile(pdfFile);
     setIsProcessing(true);
+    trackEvent({ name: "tool_used", tool: "unlock-pdf" });
     setErrorMsg(null);
     setUnlockSuccess(false);
     setUnlockedData(null);
@@ -55,10 +60,16 @@ export function UnlockPdfClient() {
     }
   }, [file, password]);
 
-  const handleDownload = useCallback(() => {
+  const handleAdComplete = useCallback(() => {
+    trackEvent({ name: "download_completed", tool: "unlock-pdf" });
+    setShowAd(false);
     if (!unlockedData || !file) return;
     downloadFile(unlockedData, `${file.name.replace(".pdf", "")}_unlocked.pdf`);
   }, [unlockedData, file]);
+
+  const handleAdCancel = useCallback(() => {
+    setShowAd(false);
+  }, []);
 
   const handleReset = useCallback(() => {
     setFile(null);
@@ -75,6 +86,8 @@ export function UnlockPdfClient() {
       icon={Unlock}
       iconGradient="icon-circle-security"
     >
+      {isProcessing && <ProcessingOverlay />}
+      {showAd && <PreDownloadAd onComplete={handleAdComplete} onCancel={handleAdCancel} />}
       {!file ? (
         <PdfDropzone
           onFilesAdded={handleFilesAdded}
@@ -116,7 +129,7 @@ export function UnlockPdfClient() {
 
               <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
                 <button
-                  onClick={handleDownload}
+                  onClick={() => setShowAd(true)}
                   className="btn-aurora w-full sm:w-auto flex items-center justify-center gap-2"
                 >
                   <Download className="w-5 h-5" /> Download Unlocked PDF

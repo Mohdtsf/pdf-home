@@ -24,7 +24,10 @@ export async function pdfToImages(
   const { quality = 0.85, scale = 2, format = "jpeg" } = options;
 
   const pdfjs = await import("pdfjs-dist");
-  pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+  pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.min.mjs',
+    import.meta.url,
+  ).toString();
 
   const bufferCopy = pdfBuffer.slice(0);
   const doc = await pdfjs.getDocument(new Uint8Array(bufferCopy)).promise;

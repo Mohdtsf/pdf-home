@@ -3,6 +3,8 @@ import { PDFDocument } from "pdf-lib";
 export type PageSize = "a4" | "letter" | "fit";
 export type Orientation = "portrait" | "landscape" | "auto";
 
+export type PageMargin = "none" | "small" | "big";
+
 interface ImageFile {
   data: ArrayBuffer;
   name: string;
@@ -22,13 +24,19 @@ const PAGE_SIZES = {
 export async function imagesToPdf(
   images: ImageFile[],
   pageSize: PageSize = "a4",
-  orientation: Orientation = "auto"
+  orientation: Orientation = "auto",
+  margin: PageMargin = "none"
 ): Promise<Uint8Array> {
   if (images.length === 0) {
     throw new Error("No images provided.");
   }
 
   const doc = await PDFDocument.create();
+
+  // Define margin in points
+  let m = 0;
+  if (margin === "small") m = 20;
+  else if (margin === "big") m = 40;
 
   for (const image of images) {
     // Embed the image based on MIME type
@@ -54,9 +62,9 @@ export async function imagesToPdf(
     let pageHeight: number;
 
     if (pageSize === "fit") {
-      // Page matches image dimensions
-      pageWidth = imgWidth;
-      pageHeight = imgHeight;
+      // Page matches image dimensions + margin
+      pageWidth = imgWidth + 2 * m;
+      pageHeight = imgHeight + 2 * m;
     } else {
       const dims = PAGE_SIZES[pageSize];
 
@@ -74,24 +82,28 @@ export async function imagesToPdf(
 
     const page = doc.addPage([pageWidth, pageHeight]);
 
-    // Scale image to fit within page while maintaining aspect ratio
-    const pageAspect = pageWidth / pageHeight;
+    // Printable area size
+    const printableWidth = Math.max(10, pageWidth - 2 * m);
+    const printableHeight = Math.max(10, pageHeight - 2 * m);
+
+    // Scale image to fit within printable area while maintaining aspect ratio
+    const printableAspect = printableWidth / printableHeight;
     let drawWidth: number;
     let drawHeight: number;
 
-    if (imgAspect > pageAspect) {
-      // Image is wider than page — constrain by width
-      drawWidth = pageWidth;
-      drawHeight = pageWidth / imgAspect;
+    if (imgAspect > printableAspect) {
+      // Image is wider than printable area — constrain by width
+      drawWidth = printableWidth;
+      drawHeight = printableWidth / imgAspect;
     } else {
-      // Image is taller than page — constrain by height
-      drawHeight = pageHeight;
-      drawWidth = pageHeight * imgAspect;
+      // Image is taller than printable area — constrain by height
+      drawHeight = printableHeight;
+      drawWidth = printableHeight * imgAspect;
     }
 
-    // Center the image on the page
-    const x = (pageWidth - drawWidth) / 2;
-    const y = (pageHeight - drawHeight) / 2;
+    // Center the image within the printable area
+    const x = m + (printableWidth - drawWidth) / 2;
+    const y = m + (printableHeight - drawHeight) / 2;
 
     page.drawImage(embedded, {
       x,

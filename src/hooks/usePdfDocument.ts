@@ -17,7 +17,10 @@ export function usePdfDocument(fileBuffer: ArrayBuffer | null) {
     const loadDoc = async () => {
       try {
         const pdfjs = await import('pdfjs-dist');
-        pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+        pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+          'pdfjs-dist/build/pdf.worker.min.mjs',
+          import.meta.url,
+        ).toString();
         
         // Create a copy of the buffer to prevent pdf.js from transferring and detaching
         // the original ArrayBuffer which is shared across the app.
