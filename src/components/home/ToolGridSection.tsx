@@ -23,7 +23,7 @@ const tools = [
   { name: "PDF to JPG", description: "Convert PDF pages into JPG images", href: "/pdf-to-jpg", icon: FileOutput, category: "convert" },
   { name: "JPG to PDF", description: "Convert images into PDF documents", href: "/jpg-to-pdf", icon: FileInput, category: "convert" },
   // Edit
-  { name: "Add Text", description: "Insert text anywhere on your PDF", href: "/add-text-to-pdf", icon: Type, category: "edit" },
+  { name: "Edit PDF", description: "Edit text, draw, sign, and annotate PDF", href: "/edit-pdf", icon: Type, category: "edit" },
   { name: "Watermark", description: "Stamp text or images over your PDF", href: "/watermark-pdf", icon: Stamp, category: "edit" },
   { name: "Sign PDF", description: "Draw or type your signature on PDFs", href: "/sign-pdf", icon: PenTool, category: "edit" },
   { name: "Page Numbers", description: "Add page numbering to your document", href: "/add-page-numbers", icon: Hash, category: "edit" },

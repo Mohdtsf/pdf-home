@@ -30,7 +30,7 @@ module.exports = {
     const toolPaths = [
       '/merge-pdf', '/split-pdf', '/rotate-pdf',
       '/compress-pdf', '/pdf-to-jpg', '/jpg-to-pdf',
-      '/add-text-to-pdf', '/watermark-pdf', '/sign-pdf',
+      '/edit-pdf', '/watermark-pdf', '/sign-pdf',
       '/add-page-numbers', '/protect-pdf', '/unlock-pdf',
     ];
 

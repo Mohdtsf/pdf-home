@@ -50,7 +50,7 @@ const toolCategories = [
     gradient: "icon-circle-edit",
     glow: "tool-card-edit",
     tools: [
-      { name: "Add Text", href: "/add-text-to-pdf", icon: Type, description: "Add text to PDF" },
+      { name: "Edit PDF", href: "/edit-pdf", icon: Type, description: "Edit, draw, and annotate PDF" },
       { name: "Watermark", href: "/watermark-pdf", icon: Stamp, description: "Add watermark" },
       { name: "Sign PDF", href: "/sign-pdf", icon: PenTool, description: "Sign documents" },
       { name: "Page Numbers", href: "/add-page-numbers", icon: Hash, description: "Add numbering" },

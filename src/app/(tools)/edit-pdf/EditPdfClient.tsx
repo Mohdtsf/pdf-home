@@ -65,7 +65,7 @@ interface HistoryState {
   deletedPages: number[];
 }
 
-export function AddTextClient() {
+export function EditPdfClient() {
   const [file, setFile] = useState<PdfFile | null>(null);
   const [pdfDoc, setPdfDoc] = useState<PDFDocumentProxy | null>(null);
   const [pageCount, setPageCount] = useState(0);
@@ -620,7 +620,7 @@ export function AddTextClient() {
   const handleApplyChanges = async () => {
     if (!file) return;
     setIsProcessing(true);
-    trackEvent({ name: "tool_used", tool: "add-text-to-pdf" });
+    trackEvent({ name: "tool_used", tool: "edit-pdf" });
 
     try {
       const result = await compileEditedPdf(file.buffer, objects, drawings, pageRotations, deletedPages);
@@ -636,7 +636,7 @@ export function AddTextClient() {
   };
 
   const handleAdComplete = useCallback(() => {
-    trackEvent({ name: "download_completed", tool: "add-text-to-pdf" });
+    trackEvent({ name: "download_completed", tool: "edit-pdf" });
     setShowAd(false);
     if (resultData && downloadFilename) {
       downloadFile(resultData, downloadFilename, "application/pdf");
@@ -665,6 +665,9 @@ export function AddTextClient() {
       icon={Pointer}
       iconGradient="icon-circle-edit"
       maxWidth="max-w-none"
+      hideAds={!!file}
+      hideHeader={!!file}
+      fullWidth={!!file}
     >
       {isProcessing && <ProcessingOverlay />}
       {showAd && <PreDownloadAd onComplete={handleAdComplete} onCancel={() => setShowAd(false)} />}

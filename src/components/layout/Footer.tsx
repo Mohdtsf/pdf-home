@@ -49,7 +49,7 @@ export function Footer() {
             <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">More Tools</h3>
             <ul className="space-y-2">
               {[
-                { name: "Add Text", href: "/add-text-to-pdf" },
+                { name: "Edit PDF", href: "/edit-pdf" },
                 { name: "Watermark", href: "/watermark-pdf" },
                 { name: "Sign PDF", href: "/sign-pdf" },
                 { name: "Protect PDF", href: "/protect-pdf" },
