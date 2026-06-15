@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { RotateCw, Download, Loader2, FileText, RotateCcw } from "lucide-react";
+import { RotateCw, Download, Loader2, RotateCcw, Smartphone } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
 import { ProcessingOverlay } from "@/components/ui/ProcessingOverlay";
 import { ToolPageLayout } from "@/components/layout/ToolPageLayout";
@@ -13,6 +13,7 @@ import { FileInfoBanner } from "@/components/pdf/FileInfoBanner";
 import { PagePreviewCard } from "@/components/pdf/PagePreviewCard";
 import { usePdfWorker } from "@/hooks/usePdfWorker";
 import { PreDownloadAd } from "@/components/ads/PreDownloadAd";
+import { ShareModal } from "@/components/pdf/ShareModal";
 import {
   DndContext,
   closestCenter,
@@ -35,7 +36,9 @@ export function RotatePdfClient() {
   const [pageOrder, setPageOrder] = useState<number[]>([]);
   const [selectedPages, setSelectedPages] = useState<Set<number>>(new Set());
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isDone, setIsDone] = useState(false);
   const [showAd, setShowAd] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [resultBuffer, setResultBuffer] = useState<Uint8Array | null>(null);
 
   const { doc, pageCount } = usePdfDocument(file?.buffer || null);
@@ -46,6 +49,7 @@ export function RotatePdfClient() {
     setPageRotations(new Map());
     setPageOrder([]);
     setSelectedPages(new Set());
+    setIsDone(false);
   }, []);
 
   const rotatePageBy = useCallback((pageIndex: number, angle: RotationAngle) => {
@@ -104,6 +108,7 @@ export function RotatePdfClient() {
 
   useEffect(() => {
     if (pageCount > 0 && pageOrder.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPageOrder(Array.from({ length: pageCount }, (_, i) => i));
     }
   }, [pageCount, pageOrder.length]);
@@ -139,7 +144,7 @@ export function RotatePdfClient() {
         ([pageIndex, angle]) => ({ pageIndex, angle })
       );
       
-      const payload: any = { buffer: file.buffer, rotations };
+      const payload: Record<string, unknown> = { buffer: file.buffer, rotations };
       if (isCustomOrder) {
         payload.pageOrder = pageOrder;
       }
@@ -153,12 +158,14 @@ export function RotatePdfClient() {
     } finally {
       setIsProcessing(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [file, pageRotations, runTask]);
 
   const handleAdComplete = useCallback(() => {
     trackEvent({ name: "download_completed", tool: "rotate-pdf" });
     if (resultBuffer) {
       downloadFile(resultBuffer, "rotated.pdf");
+      setIsDone(true);
     }
     setShowAd(false);
   }, [resultBuffer]);
@@ -170,6 +177,7 @@ export function RotatePdfClient() {
     setPageRotations(new Map());
     setPageOrder([]);
     setSelectedPages(new Set());
+    setIsDone(false);
   }, []);
 
   const getRotationLabel = (angle: RotationAngle): string => {
@@ -193,6 +201,12 @@ export function RotatePdfClient() {
       {showAd && (
         <PreDownloadAd onComplete={handleAdComplete} onCancel={handleAdCancel} />
       )}
+      <ShareModal 
+        isOpen={showShareModal} 
+        onClose={() => setShowShareModal(false)} 
+        pdfBlob={resultBuffer ? new Blob([resultBuffer], { type: "application/pdf" }) : null} 
+        fileName="rotated.pdf" 
+      />
       {!file ? (
         <PdfDropzone
           onFilesAdded={handleFilesAdded}
@@ -289,14 +303,19 @@ export function RotatePdfClient() {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row items-center gap-3 pt-4">
             <button
-              onClick={handleRotate}
-              disabled={isProcessing || (pageRotations.size === 0 && !pageOrder.some((val, i) => val !== i))}
+              onClick={isDone ? () => downloadFile(resultBuffer!, "rotated.pdf") : handleRotate}
+              disabled={!isDone && (isProcessing || (pageRotations.size === 0 && !pageOrder.some((val, i) => val !== i)))}
               className="btn-aurora w-full sm:w-auto flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(102,126,234,0.4)] transition-all duration-300 active:scale-95"
             >
               {isProcessing ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
                   Rotating...
+                </>
+              ) : isDone ? (
+                <>
+                  <Download className="w-5 h-5" />
+                  Download Again
                 </>
               ) : (
                 <>
@@ -305,6 +324,16 @@ export function RotatePdfClient() {
                 </>
               )}
             </button>
+
+            {isDone && (
+              <button
+                onClick={() => setShowShareModal(true)}
+                className="btn-secondary w-full sm:w-auto flex items-center justify-center gap-2 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 active:scale-95"
+              >
+                <Smartphone className="w-5 h-5" />
+                Share to Mobile
+              </button>
+            )}
 
             <button onClick={handleReset} className="btn-secondary w-full sm:w-auto hover:-translate-y-1 hover:shadow-lg hover:shadow-white/5 transition-all duration-300 active:scale-95">
               Start Over

@@ -1,18 +1,19 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Scissors, Download, Loader2, FileText } from "lucide-react";
+import { Scissors, Download, Loader2, Smartphone } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
 import { ProcessingOverlay } from "@/components/ui/ProcessingOverlay";
 import { ToolPageLayout } from "@/components/layout/ToolPageLayout";
 import { PdfDropzone, type PdfFile } from "@/components/pdf/PdfDropzone";
 import type { SplitOptions } from "@/lib/pdf/split";
-import { downloadFile, downloadAsZip } from "@/lib/download";
+import { downloadFile, downloadAsZip, createZipBlob } from "@/lib/download";
 import { usePdfDocument } from "@/hooks/usePdfDocument";
 import { FileInfoBanner } from "@/components/pdf/FileInfoBanner";
 import { PagePreviewCard } from "@/components/pdf/PagePreviewCard";
 import { usePdfWorker } from "@/hooks/usePdfWorker";
 import { PreDownloadAd } from "@/components/ads/PreDownloadAd";
+import { ShareModal } from "@/components/pdf/ShareModal";
 import {
   DndContext,
   closestCenter,
@@ -42,7 +43,11 @@ export function SplitPdfClient() {
   const [showAllGroups, setShowAllGroups] = useState(false);
   
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isDone, setIsDone] = useState(false);
   const [showAd, setShowAd] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareBlob, setShareBlob] = useState<Blob | null>(null);
+  const [shareFilename, setShareFilename] = useState<string>("split.pdf");
   const [resultFiles, setResultFiles] = useState<{ filename: string, data: Uint8Array }[] | null>(null);
 
   const { doc, pageCount } = usePdfDocument(file?.buffer || null);
@@ -51,12 +56,16 @@ export function SplitPdfClient() {
   const handleFilesAdded = useCallback((files: PdfFile[]) => {
     setFile(files[0]);
     setPageOrder([]);
+    setIsDone(false);
   }, []);
 
   useEffect(() => {
     if (pageCount > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRangeTo(pageCount);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedPages(new Set(Array.from({ length: pageCount }, (_, i) => i + 1)));
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPageOrder(Array.from({ length: pageCount }, (_, i) => i));
     }
   }, [pageCount]);
@@ -151,17 +160,45 @@ export function SplitPdfClient() {
     } finally {
       setIsProcessing(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [file, splitMode, selectedPages, rangeFrom, rangeTo, everyN, runTask]);
 
+  const handleDownloadAgain = useCallback(async () => {
+    if (!resultFiles) return;
+    if (resultFiles.length === 1) {
+      downloadFile(resultFiles[0].data, resultFiles[0].filename);
+    } else {
+      await downloadAsZip(resultFiles, "split-pdfs.zip");
+    }
+  }, [resultFiles]);
+
   const handleAdComplete = useCallback(async () => {
+    trackEvent({ name: "download_completed", tool: "split-pdf" });
+    await handleDownloadAgain();
+    setIsDone(true);
+    setShowAd(false);
+  }, [handleDownloadAgain]);
+
+  useEffect(() => {
+    let isMounted = true;
     if (resultFiles) {
       if (resultFiles.length === 1) {
-        downloadFile(resultFiles[0].data, resultFiles[0].filename);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setShareBlob(new Blob([resultFiles[0].data], { type: "application/pdf" }));
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setShareFilename(resultFiles[0].filename);
       } else {
-        await downloadAsZip(resultFiles, "split-pdfs.zip");
+        createZipBlob(resultFiles).then(blob => {
+          if (isMounted) {
+            setShareBlob(blob);
+            setShareFilename("split-pdfs.zip");
+          }
+        });
       }
+    } else {
+      setShareBlob(null);
     }
-    setShowAd(false);
+    return () => { isMounted = false; };
   }, [resultFiles]);
 
   const handleAdCancel = useCallback(() => setShowAd(false), []);
@@ -170,6 +207,8 @@ export function SplitPdfClient() {
     setFile(null);
     setSelectedPages(new Set());
     setPageOrder([]);
+    setIsDone(false);
+    setResultFiles(null);
   }, []);
 
   return (
@@ -184,6 +223,12 @@ export function SplitPdfClient() {
       {showAd && (
         <PreDownloadAd onComplete={handleAdComplete} onCancel={handleAdCancel} />
       )}
+      <ShareModal 
+        isOpen={showShareModal} 
+        onClose={() => setShowShareModal(false)} 
+        pdfBlob={shareBlob} 
+        fileName={shareFilename} 
+      />
       {!file ? (
         <PdfDropzone
           onFilesAdded={handleFilesAdded}
@@ -385,14 +430,19 @@ export function SplitPdfClient() {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row items-center gap-3 pt-4">
             <button
-              onClick={handleSplit}
-              disabled={isProcessing || (splitMode === "individual" && selectedPages.size === 0)}
+              onClick={isDone ? handleDownloadAgain : handleSplit}
+              disabled={!isDone && (isProcessing || (splitMode === "individual" && selectedPages.size === 0))}
               className="btn-aurora w-full sm:w-auto flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(102,126,234,0.4)] transition-all duration-300 active:scale-95"
             >
               {isProcessing ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
                   Splitting...
+                </>
+              ) : isDone ? (
+                <>
+                  <Download className="w-5 h-5" />
+                  Download Again
                 </>
               ) : (
                 <>
@@ -401,6 +451,16 @@ export function SplitPdfClient() {
                 </>
               )}
             </button>
+
+            {isDone && (
+              <button
+                onClick={() => setShowShareModal(true)}
+                className="btn-secondary w-full sm:w-auto flex items-center justify-center gap-2 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 active:scale-95"
+              >
+                <Smartphone className="w-5 h-5" />
+                Share to Mobile
+              </button>
+            )}
 
             <button onClick={handleReset} className="btn-secondary w-full sm:w-auto hover:-translate-y-1 hover:shadow-lg hover:shadow-white/5 transition-all duration-300 active:scale-95">
               Start Over

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Merge, Download, Plus, Loader2 } from "lucide-react";
+import { Merge, Download, Plus, Loader2, Smartphone } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
 import { ProcessingOverlay } from "@/components/ui/ProcessingOverlay";
 import { ToolPageLayout } from "@/components/layout/ToolPageLayout";
@@ -10,6 +10,7 @@ import { FilePreviewCard } from "@/components/pdf/FilePreviewCard";
 import { downloadFile } from "@/lib/download";
 import { usePdfWorker } from "@/hooks/usePdfWorker";
 import { PreDownloadAd } from "@/components/ads/PreDownloadAd";
+import { ShareModal } from "@/components/pdf/ShareModal";
 import {
   DndContext,
   closestCenter,
@@ -31,6 +32,7 @@ export function MergePdfClient() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDone, setIsDone] = useState(false);
   const [showAd, setShowAd] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [resultBuffer, setResultBuffer] = useState<Uint8Array | null>(null);
   const { runTask } = usePdfWorker();
 
@@ -114,6 +116,12 @@ export function MergePdfClient() {
       {showAd && (
         <PreDownloadAd onComplete={handleAdComplete} onCancel={handleAdCancel} />
       )}
+      <ShareModal 
+        isOpen={showShareModal} 
+        onClose={() => setShowShareModal(false)} 
+        pdfBlob={resultBuffer ? new Blob([resultBuffer], { type: "application/pdf" }) : null} 
+        fileName="merged.pdf" 
+      />
       {files.length === 0 ? (
         <PdfDropzone
           onFilesAdded={handleFilesAdded}
@@ -156,8 +164,8 @@ export function MergePdfClient() {
           {/* Actions */}
           <div className="flex flex-col sm:flex-row items-center gap-3 pt-4">
             <button
-              onClick={handleMerge}
-              disabled={files.length < 2 || isProcessing}
+              onClick={isDone ? () => downloadFile(resultBuffer!, "merged.pdf") : handleMerge}
+              disabled={files.length < 2 || (isProcessing && !isDone)}
               className="btn-aurora w-full sm:w-auto flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(102,126,234,0.4)] transition-all duration-300 active:scale-95"
             >
               {isProcessing ? (
@@ -177,6 +185,16 @@ export function MergePdfClient() {
                 </>
               )}
             </button>
+
+            {isDone && (
+              <button
+                onClick={() => setShowShareModal(true)}
+                className="btn-secondary w-full sm:w-auto flex items-center justify-center gap-2 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 active:scale-95"
+              >
+                <Smartphone className="w-5 h-5" />
+                Share to Mobile
+              </button>
+            )}
 
             <button
               onClick={handleReset}

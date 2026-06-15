@@ -42,7 +42,7 @@ export function proxy(request: NextRequest) {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: blob: https://pagead2.googlesyndication.com https://www.google-analytics.com https://*.googleusercontent.com",
-      "connect-src 'self' https://pagead2.googlesyndication.com https://www.google-analytics.com",
+      "connect-src 'self' https://pagead2.googlesyndication.com https://www.google-analytics.com https://*.peerjs.com wss://*.peerjs.com",
       "frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com",
       "worker-src 'self' blob:",
       "object-src 'none'",
