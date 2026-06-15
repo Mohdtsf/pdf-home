@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Download, X } from "lucide-react";
+import { createPortal } from "react-dom";
 import { AdBanner } from "./AdBanner";
 
 interface PreDownloadAdProps {
@@ -26,7 +27,9 @@ export function PreDownloadAd({ onComplete, onCancel }: PreDownloadAdProps) {
     return () => clearInterval(timer);
   }, []);
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
       <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl relative text-[var(--color-text-primary)]">
         <button 
@@ -61,6 +64,7 @@ export function PreDownloadAd({ onComplete, onCancel }: PreDownloadAdProps) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

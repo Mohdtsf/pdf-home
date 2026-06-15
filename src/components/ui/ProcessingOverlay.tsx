@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
+import { createPortal } from "react-dom";
 
 interface ProcessingOverlayProps {
   message?: string;
@@ -15,7 +16,9 @@ export function ProcessingOverlay({
   message = "Processing your PDF...",
   progress,
 }: ProcessingOverlayProps) {
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
       <div className="glass-card p-8 text-center max-w-xs w-full mx-4">
         {/* Spinner */}
@@ -48,6 +51,7 @@ export function ProcessingOverlay({
           All processing happens in your browser
         </p>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

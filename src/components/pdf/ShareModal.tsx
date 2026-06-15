@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { X, Copy, Check, Smartphone, Wifi, Download } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
+import { createPortal } from "react-dom";
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -121,9 +122,9 @@ export function ShareModal({ isOpen, onClose, pdfBlob, fileName }: ShareModalPro
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-[var(--color-bg-base)] border border-[var(--color-border-glass)] rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
         {/* Header */}
@@ -236,6 +237,7 @@ export function ShareModal({ isOpen, onClose, pdfBlob, fileName }: ShareModalPro
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
