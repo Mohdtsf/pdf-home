@@ -1,4 +1,5 @@
 "use client";
+import { useToast } from "@/components/ui/Toast";
 
 import { useState, useCallback, useEffect } from "react";
 import { Droplets, Download, Loader2, FileText, Image as ImageIcon, Bold, Italic, Underline } from "lucide-react";
@@ -26,6 +27,7 @@ type WatermarkPosition =
   | "bottom-left" | "bottom-center" | "bottom-right";
 
 export function AddWatermarkClient() {
+  const { showToast } = useToast();
   const [file, setFile] = useState<PdfFile | null>(null);
   const [type, setType] = useState<"text" | "image">("text");
 
@@ -148,7 +150,7 @@ export function AddWatermarkClient() {
       downloadFile(result, `${file.name.replace(".pdf", "")}_watermarked.pdf`);
     } catch (err) {
       console.error("Watermark failed:", err);
-      alert("Failed to apply watermark. Please check options and try again.");
+      showToast("Failed to apply watermark. Please check options and try again.", "error");
     } finally {
       setIsProcessing(false);
     }

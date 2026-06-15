@@ -12,6 +12,11 @@ import {
   Minimize2,
   Lock,
   Unlock,
+  FileText,
+  Table,
+  Presentation,
+  ScanText,
+  Globe,
 } from "lucide-react";
 
 const tools = [
@@ -19,9 +24,17 @@ const tools = [
   { name: "Merge PDF", description: "Combine multiple PDFs into one document", href: "/merge-pdf", icon: Merge, category: "organize" },
   { name: "Split PDF", description: "Separate pages into individual PDF files", href: "/split-pdf", icon: Scissors, category: "organize" },
   { name: "Rotate PDF", description: "Rotate PDF pages to any orientation", href: "/rotate-pdf", icon: RotateCw, category: "organize" },
-  // Convert
+  // Convert From PDF
+  { name: "PDF to Word", description: "Convert PDF to editable Word documents", href: "/pdf-to-word", icon: FileText, category: "convert" },
+  { name: "PDF to Excel", description: "Extract tables to Excel spreadsheets", href: "/pdf-to-excel", icon: Table, category: "convert" },
+  { name: "PDF to PPT", description: "Turn PDFs into PowerPoint presentations", href: "/pdf-to-powerpoint", icon: Presentation, category: "convert" },
   { name: "PDF to JPG", description: "Convert PDF pages into JPG images", href: "/pdf-to-jpg", icon: FileOutput, category: "convert" },
+  // Convert To PDF
+  { name: "Word to PDF", description: "Make DOC and DOCX files easy to read", href: "/word-to-pdf", icon: FileText, category: "convert" },
+  { name: "Excel to PDF", description: "Make EXCEL spreadsheets easy to read", href: "/excel-to-pdf", icon: Table, category: "convert" },
+  { name: "PPT to PDF", description: "Make PPT and PPTX files easy to read", href: "/powerpoint-to-pdf", icon: Presentation, category: "convert" },
   { name: "JPG to PDF", description: "Convert images into PDF documents", href: "/jpg-to-pdf", icon: FileInput, category: "convert" },
+  { name: "HTML to PDF", description: "Convert web pages to PDF documents", href: "/html-to-pdf", icon: Globe, category: "convert" },
   // Edit
   { name: "Edit PDF", description: "Edit text, draw, sign, and annotate PDF", href: "/edit-pdf", icon: Type, category: "edit" },
   { name: "Watermark", description: "Stamp text or images over your PDF", href: "/watermark-pdf", icon: Stamp, category: "edit" },
@@ -29,6 +42,7 @@ const tools = [
   { name: "Page Numbers", description: "Add page numbering to your document", href: "/add-page-numbers", icon: Hash, category: "edit" },
   // Optimize
   { name: "Compress PDF", description: "Reduce file size without losing quality", href: "/compress-pdf", icon: Minimize2, category: "optimize" },
+  { name: "OCR PDF", description: "Make text in images selectable and searchable", href: "/ocr-pdf", icon: ScanText, category: "optimize" },
   // Security
   { name: "Protect PDF", description: "Add password protection to your PDF", href: "/protect-pdf", icon: Lock, category: "security" },
   { name: "Unlock PDF", description: "Remove password from protected PDFs", href: "/unlock-pdf", icon: Unlock, category: "security" },

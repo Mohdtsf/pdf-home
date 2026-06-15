@@ -47,7 +47,7 @@ export const compressWorker = new Worker(
       throw new Error(`Compression failed: ${error.message}`);
     }
   },
-  { connection }
+  { connection: connection as any }
 );
 
 compressWorker.on('completed', (job) => {

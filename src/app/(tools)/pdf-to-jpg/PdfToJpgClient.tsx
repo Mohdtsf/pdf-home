@@ -1,4 +1,5 @@
 "use client";
+import { useToast } from "@/components/ui/Toast";
 
 import { useState, useCallback } from "react";
 import { Image as ImageIcon, Download, Loader2, FileText } from "lucide-react";
@@ -12,6 +13,7 @@ import { downloadFile, downloadAsZip } from "@/lib/download";
 import { PDFDocument } from "pdf-lib";
 
 export function PdfToJpgClient() {
+  const { showToast } = useToast();
   const [file, setFile] = useState<PdfFile | null>(null);
   const [pageCount, setPageCount] = useState(0);
   const [quality, setQuality] = useState(85);
@@ -47,7 +49,7 @@ export function PdfToJpgClient() {
       setProgress("");
     } catch (err) {
       console.error("Conversion failed:", err);
-      alert("Failed to convert PDF to JPG. Please try again.");
+      showToast("Failed to convert PDF to JPG. Please try again.", "error");
     } finally {
       setIsProcessing(false);
     }

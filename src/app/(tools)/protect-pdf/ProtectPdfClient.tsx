@@ -1,4 +1,5 @@
 "use client";
+import { useToast } from "@/components/ui/Toast";
 
 import { useState, useCallback } from "react";
 import { ShieldAlert, Download, Loader2, FileText, Lock, Eye, EyeOff, ShieldCheck } from "lucide-react";
@@ -11,6 +12,7 @@ import { protectPdf } from "@/lib/pdf/protect";
 import { downloadFile } from "@/lib/download";
 
 export function ProtectPdfClient() {
+  const { showToast } = useToast();
   const [file, setFile] = useState<PdfFile | null>(null);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -33,7 +35,7 @@ export function ProtectPdfClient() {
       downloadFile(result, `${file.name.replace(".pdf", "")}_protected.pdf`);
     } catch (err) {
       console.error("Protection failed:", err);
-      alert("Failed to apply protection. Please try again.");
+      showToast("Failed to apply protection. Please try again.", "error");
     } finally {
       setIsProcessing(false);
     }

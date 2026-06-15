@@ -15,7 +15,7 @@ export interface JobStatus {
  * Upload a file to a specific tool endpoint.
  */
 export async function uploadFile(
-  endpoint: '/compress' | '/convert' | '/ocr',
+  endpoint: '/compress' | '/convert' | '/ocr' | '/html-to-pdf' | string,
   file: File,
   additionalFields?: Record<string, string>
 ): Promise<JobResponse> {

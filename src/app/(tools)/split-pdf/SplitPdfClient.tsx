@@ -1,4 +1,5 @@
 "use client";
+import { useToast } from "@/components/ui/Toast";
 
 import { useState, useCallback, useEffect } from "react";
 import { Scissors, Download, Loader2, Smartphone } from "lucide-react";
@@ -33,6 +34,7 @@ import {
 type SplitMode = "individual" | "ranges" | "every-n";
 
 export function SplitPdfClient() {
+  const { showToast } = useToast();
   const [file, setFile] = useState<PdfFile | null>(null);
   const [splitMode, setSplitMode] = useState<SplitMode>("individual");
   const [selectedPages, setSelectedPages] = useState<Set<number>>(new Set());
@@ -156,7 +158,7 @@ export function SplitPdfClient() {
       setShowAd(true);
     } catch (err) {
       console.error("Split failed:", err);
-      alert("Failed to split PDF. Please try again.");
+      showToast("Failed to split PDF. Please try again.", "error");
     } finally {
       setIsProcessing(false);
     }
@@ -184,7 +186,7 @@ export function SplitPdfClient() {
     if (resultFiles) {
       if (resultFiles.length === 1) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
-        setShareBlob(new Blob([resultFiles[0].data], { type: "application/pdf" }));
+        setShareBlob(new Blob([resultFiles[0].data as any], { type: "application/pdf" }));
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setShareFilename(resultFiles[0].filename);
       } else {

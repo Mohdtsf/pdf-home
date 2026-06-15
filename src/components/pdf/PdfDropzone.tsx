@@ -18,6 +18,9 @@ interface PdfDropzoneProps {
   maxFiles?: number;
   label?: string;
   sublabel?: string;
+  accept?: string;
+  acceptLabel?: string;
+  validateFile?: (file: File) => Promise<ArrayBuffer>;
 }
 
 export function PdfDropzone({
@@ -26,6 +29,9 @@ export function PdfDropzone({
   maxFiles = 20,
   label = "Drop your PDF files here",
   sublabel = "or click to browse",
+  accept = "application/pdf,.pdf",
+  acceptLabel = "PDF files only",
+  validateFile,
 }: PdfDropzoneProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +49,12 @@ export function PdfDropzone({
 
         for (const file of files) {
           try {
-            const buffer = await validatePdfFileObject(file);
+            let buffer: ArrayBuffer;
+            if (validateFile) {
+              buffer = await validateFile(file);
+            } else {
+              buffer = await validatePdfFileObject(file);
+            }
             pdfFiles.push({
               id: crypto.randomUUID(),
               file,
@@ -51,11 +62,11 @@ export function PdfDropzone({
               size: file.size,
               buffer,
             });
-          } catch (err) {
+          } catch (err: any) {
             if (err instanceof PdfValidationError) {
               setError(`${file.name}: ${err.message}`);
             } else {
-              setError(`Failed to process ${file.name}`);
+              setError(`${file.name}: ${err.message || 'Failed to process file'}`);
             }
           }
         }
@@ -67,7 +78,7 @@ export function PdfDropzone({
         setIsProcessing(false);
       }
     },
-    [onFilesAdded, maxFiles]
+    [onFilesAdded, maxFiles, validateFile]
   );
 
   const handleDrop = useCallback(
@@ -116,7 +127,7 @@ export function PdfDropzone({
         onClick={handleClick}
         role="button"
         tabIndex={0}
-        aria-label="Upload PDF files"
+        aria-label="Upload files"
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
@@ -127,7 +138,7 @@ export function PdfDropzone({
         <input
           ref={inputRef}
           type="file"
-          accept="application/pdf,.pdf"
+          accept={accept}
           multiple={multiple}
           onChange={handleInputChange}
           className="hidden"
@@ -153,7 +164,7 @@ export function PdfDropzone({
           </div>
 
           <p className="text-xs text-[var(--color-text-muted)]">
-            PDF files only • Max 100MB per file
+            {acceptLabel} • Max 100MB per file
           </p>
         </div>
       </div>

@@ -1,4 +1,5 @@
 "use client";
+import { useToast } from "@/components/ui/Toast";
 
 import { useState, useCallback } from "react";
 import { Merge, Download, Plus, Loader2, Smartphone } from "lucide-react";
@@ -28,6 +29,7 @@ import {
 } from "@dnd-kit/sortable";
 
 export function MergePdfClient() {
+  const { showToast } = useToast();
   const [files, setFiles] = useState<PdfFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDone, setIsDone] = useState(false);
@@ -80,7 +82,7 @@ export function MergePdfClient() {
       setShowAd(true);
     } catch (err) {
       console.error("Merge failed:", err);
-      alert("Failed to merge PDFs. Please try again.");
+      showToast("Failed to merge PDFs. Please try again.", "error");
     } finally {
       setIsProcessing(false);
     }
@@ -119,7 +121,7 @@ export function MergePdfClient() {
       <ShareModal 
         isOpen={showShareModal} 
         onClose={() => setShowShareModal(false)} 
-        pdfBlob={resultBuffer ? new Blob([resultBuffer], { type: "application/pdf" }) : null} 
+        pdfBlob={resultBuffer ? new Blob([resultBuffer as any], { type: "application/pdf" }) : null} 
         fileName="merged.pdf" 
       />
       {files.length === 0 ? (

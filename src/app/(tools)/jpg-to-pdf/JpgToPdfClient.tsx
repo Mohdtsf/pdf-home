@@ -1,4 +1,5 @@
 "use client";
+import { useToast } from "@/components/ui/Toast";
 
 import { useState, useCallback, useEffect } from "react";
 import { FileImage, Download, Loader2, X, GripVertical } from "lucide-react";
@@ -39,6 +40,7 @@ interface ImageFile {
 }
 
 export function JpgToPdfClient() {
+  const { showToast } = useToast();
   const [images, setImages] = useState<ImageFile[]>([]);
   const [pageSize, setPageSize] = useState<PageSize>("a4");
   const [orientation, setOrientation] = useState<Orientation>("auto");
@@ -179,7 +181,7 @@ export function JpgToPdfClient() {
       setShowAd(true);
     } catch (err) {
       console.error("Conversion failed:", err);
-      alert("Failed to convert images to PDF. Please try again.");
+      showToast("Failed to convert images to PDF. Please try again.", "error");
     } finally {
       setIsProcessing(false);
     }

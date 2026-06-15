@@ -1,4 +1,5 @@
 "use client";
+import { useToast } from "@/components/ui/Toast";
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
@@ -66,6 +67,7 @@ interface HistoryState {
 }
 
 export function EditPdfClient() {
+  const { showToast } = useToast();
   const [file, setFile] = useState<PdfFile | null>(null);
   const [pdfDoc, setPdfDoc] = useState<PDFDocumentProxy | null>(null);
   const [pageCount, setPageCount] = useState(0);
@@ -516,7 +518,7 @@ export function EditPdfClient() {
 
   const handleDeletePage = (idx: number) => {
     if (pageCount - deletedPages.length <= 1) {
-      alert("A PDF must have at least one page.");
+      showToast("A PDF must have at least one page.", "error");
       return;
     }
     setDeletedPages(prev => {
@@ -533,7 +535,7 @@ export function EditPdfClient() {
     // To implement adding blank pages, we can push a special object representing a blank page,
     // or just let users add shapes/drawings on existing pages. For simplicity and reliability,
     // we let them fully modify the original pages. Let's focus on rotation/deletion/drawings.
-    alert("Blank page insertion will be appended to the final saved document.");
+    showToast("Blank page insertion will be appended to the final saved document.", "info");
   };
 
   // Signature placement
@@ -608,7 +610,7 @@ export function EditPdfClient() {
       setShowAd(true);
     } catch (err) {
       console.error("Compilation failed:", err);
-      alert("Failed to save edited PDF. Please try again.");
+      showToast("Failed to save edited PDF. Please try again.", "error");
     } finally {
       setIsProcessing(false);
     }

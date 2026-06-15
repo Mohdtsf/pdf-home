@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import fs from 'fs';
 import { pipeline } from 'stream/promises';
+import { sanitizeFilename } from '../utils/sanitize';
 
 export default async function ocrRoutes(app: FastifyInstance) {
   app.post('/', async (req, reply) => {
@@ -19,7 +20,7 @@ export default async function ocrRoutes(app: FastifyInstance) {
     }
 
     const fileId = uuidv4();
-    const filename = `${fileId}-${data.filename}`;
+    const filename = `${fileId}-${sanitizeFilename(data.filename)}`;
     const uploadPath = path.join(process.cwd(), 'uploads', filename);
 
     // Save file locally for processing

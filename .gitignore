@@ -160,3 +160,6 @@ test.pdf
 /patch_tools.py
 /update_task.js
 
+# Redis & Backend uploads
+dump.rdb
+backend/uploads/

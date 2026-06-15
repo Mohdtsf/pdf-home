@@ -1,4 +1,5 @@
 "use client";
+import { useToast } from "@/components/ui/Toast";
 
 import { useState, useCallback, useEffect } from "react";
 import { RotateCw, Download, Loader2, RotateCcw, Smartphone } from "lucide-react";
@@ -31,6 +32,7 @@ import {
 } from "@dnd-kit/sortable";
 
 export function RotatePdfClient() {
+  const { showToast } = useToast();
   const [file, setFile] = useState<PdfFile | null>(null);
   const [pageRotations, setPageRotations] = useState<Map<number, RotationAngle>>(new Map());
   const [pageOrder, setPageOrder] = useState<number[]>([]);
@@ -154,7 +156,7 @@ export function RotatePdfClient() {
       setShowAd(true);
     } catch (err) {
       console.error("Rotate failed:", err);
-      alert("Failed to rotate PDF. Please try again.");
+      showToast("Failed to rotate PDF. Please try again.", "error");
     } finally {
       setIsProcessing(false);
     }
@@ -204,7 +206,7 @@ export function RotatePdfClient() {
       <ShareModal 
         isOpen={showShareModal} 
         onClose={() => setShowShareModal(false)} 
-        pdfBlob={resultBuffer ? new Blob([resultBuffer], { type: "application/pdf" }) : null} 
+        pdfBlob={resultBuffer ? new Blob([resultBuffer as any], { type: "application/pdf" }) : null} 
         fileName="rotated.pdf" 
       />
       {!file ? (

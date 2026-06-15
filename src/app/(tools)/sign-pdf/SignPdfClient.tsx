@@ -1,4 +1,5 @@
 "use client";
+import { useToast } from "@/components/ui/Toast";
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
@@ -28,6 +29,7 @@ function dataUrlToUint8Array(dataUrl: string): Uint8Array {
 }
 
 export function SignPdfClient() {
+  const { showToast } = useToast();
   const [file, setFile] = useState<PdfFile | null>(null);
   const [pdfDoc, setPdfDoc] = useState<PDFDocumentProxy | null>(null);
   const [pageCount, setPageCount] = useState(0);
@@ -151,7 +153,7 @@ export function SignPdfClient() {
 
   const handleApplySignature = useCallback(async () => {
     if (!file || fields.length === 0) {
-      alert("Please add at least one signature or field.");
+      showToast("Please add at least one signature or field.", "error");
       return;
     }
     
@@ -160,7 +162,7 @@ export function SignPdfClient() {
       (f.type === "signature" || f.type === "initials" || f.type === "company_stamp") && !f.dataUrl
     );
     if (invalidFields.length > 0) {
-      alert("Please fill in all signature and stamp fields before applying.");
+      showToast("Please fill in all signature and stamp fields before applying.", "error");
       return;
     }
 
@@ -205,7 +207,7 @@ export function SignPdfClient() {
       setShowAd(true);
     } catch (err) {
       console.error("Signing failed:", err);
-      alert("Failed to apply signature. Please try again.");
+      showToast("Failed to apply signature. Please try again.", "error");
     } finally {
       setIsProcessing(false);
     }

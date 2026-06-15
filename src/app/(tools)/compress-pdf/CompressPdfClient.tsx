@@ -1,4 +1,5 @@
 "use client";
+import { useToast } from "@/components/ui/Toast";
 
 import { useState, useCallback } from "react";
 import { Minimize2, Download, Loader2, FileText, TrendingDown } from "lucide-react";
@@ -21,6 +22,7 @@ export interface CompressionResult {
 }
 
 export function CompressPdfClient() {
+  const { showToast } = useToast();
   const [file, setFile] = useState<PdfFile | null>(null);
   const [quality, setQuality] = useState<CompressionQuality>("medium");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -61,7 +63,7 @@ export function CompressPdfClient() {
       });
     } catch (err) {
       console.error("Compression failed:", err);
-      alert("Failed to compress PDF. Please try again or check your backend connection.");
+      showToast("Failed to compress PDF. Please try again or check your backend connection.", "error");
     } finally {
       setIsProcessing(false);
     }

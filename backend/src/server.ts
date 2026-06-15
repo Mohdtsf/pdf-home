@@ -5,7 +5,7 @@ import helmet from '@fastify/helmet';
 import * as dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
-import { compressQueue, convertQueue, ocrQueue } from './queues';
+import { compressQueue, convertQueue, ocrQueue, htmlPdfQueue } from './queues';
 
 dotenv.config();
 
@@ -37,6 +37,7 @@ import compressRoutes from './routes/compress';
 import convertRoutes from './routes/convert';
 import ocrRoutes from './routes/ocr';
 import jobsRoutes from './routes/jobs';
+import htmlToPdfRoutes from './routes/htmlToPdf';
 import startCleanupJob from './plugins/cleanup';
 
 // Import workers to ensure they start processing jobs
@@ -46,6 +47,8 @@ app.register(compressRoutes, { prefix: '/api/compress' });
 app.register(convertRoutes, { prefix: '/api/convert' });
 app.register(ocrRoutes, { prefix: '/api/ocr' });
 app.register(jobsRoutes, { prefix: '/api/jobs' });
+app.register(htmlToPdfRoutes, { prefix: '/api/html-to-pdf' });
+
 
 // Start background cleanup
 startCleanupJob(app);

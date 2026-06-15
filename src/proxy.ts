@@ -32,6 +32,32 @@ export function proxy(request: NextRequest) {
     "max-age=31536000; includeSubDomains"
   );
 
+  // Dynamic API origins for CSP
+  const connectOrigins = [
+    "'self'",
+    "https://pagead2.googlesyndication.com",
+    "https://www.google-analytics.com",
+    "https://*.peerjs.com",
+    "wss://*.peerjs.com",
+    "http://localhost:*",
+    "ws://localhost:*"
+  ];
+
+  const publicApiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (publicApiUrl) {
+    try {
+      const url = new URL(publicApiUrl);
+      connectOrigins.push(url.origin);
+      if (url.protocol === "https:") {
+        connectOrigins.push(`wss://${url.host}`);
+      } else if (url.protocol === "http:") {
+        connectOrigins.push(`ws://${url.host}`);
+      }
+    } catch {
+      // Ignore invalid URL
+    }
+  }
+
   // Content Security Policy
   // Note: 'unsafe-inline' is needed for Next.js inline styles; 'unsafe-eval' for pdf.js worker
   response.headers.set(
@@ -42,7 +68,7 @@ export function proxy(request: NextRequest) {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: blob: https://pagead2.googlesyndication.com https://www.google-analytics.com https://*.googleusercontent.com",
-      "connect-src 'self' https://pagead2.googlesyndication.com https://www.google-analytics.com https://*.peerjs.com wss://*.peerjs.com",
+      `connect-src ${connectOrigins.join(" ")}`,
       "frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com",
       "worker-src 'self' blob:",
       "object-src 'none'",

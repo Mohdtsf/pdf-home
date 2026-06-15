@@ -1,4 +1,5 @@
 "use client";
+import { useToast } from "@/components/ui/Toast";
 
 import { useState, useCallback } from "react";
 import { Hash, Download, Loader2, FileText, LayoutGrid, Check } from "lucide-react";
@@ -35,6 +36,7 @@ const PRESET_COLORS = [
 ];
 
 export function PageNumbersClient() {
+  const { showToast } = useToast();
   const [file, setFile] = useState<PdfFile | null>(null);
   const [pageCount, setPageCount] = useState(0);
 
@@ -82,7 +84,7 @@ export function PageNumbersClient() {
       setShowAd(true);
     } catch (err) {
       console.error("Numbering failed:", err);
-      alert("Failed to apply page numbers. Please try again.");
+      showToast("Failed to apply page numbers. Please try again.", "error");
     } finally {
       setIsProcessing(false);
     }
