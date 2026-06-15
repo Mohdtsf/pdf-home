@@ -39,6 +39,7 @@ export function SplitPdfClient() {
   const [rangeTo, setRangeTo] = useState(1);
   const [everyN, setEveryN] = useState(1);
   const [pageOrder, setPageOrder] = useState<number[]>([]);
+  const [showAllGroups, setShowAllGroups] = useState(false);
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [showAd, setShowAd] = useState(false);
@@ -95,6 +96,25 @@ export function SplitPdfClient() {
   const deselectAll = useCallback(() => {
     setSelectedPages(new Set());
   }, []);
+
+  const getEveryNChunks = useCallback(() => {
+    const chunks: number[][] = [];
+    let currentChunk: number[] = [];
+    
+    pageOrder.forEach((originalIndex) => {
+      currentChunk.push(originalIndex);
+      if (currentChunk.length === everyN) {
+        chunks.push(currentChunk);
+        currentChunk = [];
+      }
+    });
+    
+    if (currentChunk.length > 0) {
+      chunks.push(currentChunk);
+    }
+    
+    return chunks;
+  }, [pageOrder, everyN]);
 
   const handleSplit = useCallback(async () => {
     if (!file) return;
@@ -232,44 +252,133 @@ export function SplitPdfClient() {
           )}
 
           {splitMode === "ranges" && (
-            <div className="flex items-center gap-3">
-              <label className="text-sm text-[var(--color-text-secondary)]">From page</label>
-              <input
-                type="number"
-                min={1}
-                max={pageCount}
-                value={rangeFrom}
-                onChange={(e) => setRangeFrom(Number(e.target.value))}
-                className="w-20 px-3 py-2 rounded-lg bg-[var(--color-bg-base)] border border-[var(--color-border-glass)] text-[var(--color-text-primary)] text-sm focus:border-[#667eea] focus:outline-none transition-colors"
-              />
-              <label className="text-sm text-[var(--color-text-secondary)]">to</label>
-              <input
-                type="number"
-                min={rangeFrom}
-                max={pageCount}
-                value={rangeTo}
-                onChange={(e) => setRangeTo(Number(e.target.value))}
-                className="w-20 px-3 py-2 rounded-lg bg-[var(--color-bg-base)] border border-[var(--color-border-glass)] text-[var(--color-text-primary)] text-sm focus:border-[#667eea] focus:outline-none transition-colors"
-              />
-              <span className="text-xs text-[var(--color-text-muted)]">of {pageCount}</span>
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <label className="text-sm text-[var(--color-text-secondary)]">From page</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={pageCount}
+                  value={rangeFrom}
+                  onChange={(e) => {
+                    const val = Math.max(1, Math.min(pageCount, Number(e.target.value)));
+                    setRangeFrom(val);
+                    if (val > rangeTo) setRangeTo(val);
+                  }}
+                  className="w-20 px-3 py-2 rounded-lg bg-[var(--color-bg-base)] border border-[var(--color-border-glass)] text-[var(--color-text-primary)] text-sm focus:border-[#667eea] focus:outline-none transition-colors"
+                />
+                <label className="text-sm text-[var(--color-text-secondary)]">to</label>
+                <input
+                  type="number"
+                  min={rangeFrom}
+                  max={pageCount}
+                  value={rangeTo}
+                  onChange={(e) => setRangeTo(Math.max(rangeFrom, Math.min(pageCount, Number(e.target.value))))}
+                  className="w-20 px-3 py-2 rounded-lg bg-[var(--color-bg-base)] border border-[var(--color-border-glass)] text-[var(--color-text-primary)] text-sm focus:border-[#667eea] focus:outline-none transition-colors"
+                />
+                <span className="text-xs text-[var(--color-text-muted)]">of {pageCount}</span>
+              </div>
+
+              {/* Pages Preview Grid */}
+              <div className="space-y-3">
+                <p className="text-sm text-[var(--color-text-secondary)]">
+                  Preview of pages in range ({rangeTo - rangeFrom + 1} pages selected):
+                </p>
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                  {pageOrder
+                    .filter((originalIndex) => {
+                      const pageNum = originalIndex + 1;
+                      return pageNum >= rangeFrom && pageNum <= rangeTo;
+                    })
+                    .map((originalIndex) => {
+                      const pageNum = originalIndex + 1;
+                      return (
+                        <PagePreviewCard
+                          key={originalIndex.toString()}
+                          doc={doc}
+                          pageNum={pageNum}
+                          isSelected={true}
+                        />
+                      );
+                    })}
+                </div>
+              </div>
             </div>
           )}
 
           {splitMode === "every-n" && (
-            <div className="flex items-center gap-3">
-              <label className="text-sm text-[var(--color-text-secondary)]">Split every</label>
-              <input
-                type="number"
-                min={1}
-                max={pageCount}
-                value={everyN}
-                onChange={(e) => setEveryN(Number(e.target.value))}
-                className="w-20 px-3 py-2 rounded-lg bg-[var(--color-bg-base)] border border-[var(--color-border-glass)] text-[var(--color-text-primary)] text-sm focus:border-[#667eea] focus:outline-none transition-colors"
-              />
-              <label className="text-sm text-[var(--color-text-secondary)]">pages</label>
-              <span className="text-xs text-[var(--color-text-muted)]">
-                → {Math.ceil(pageCount / everyN)} files
-              </span>
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <label className="text-sm text-[var(--color-text-secondary)]">Split every</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={pageCount}
+                  value={everyN}
+                  onChange={(e) => setEveryN(Math.max(1, Math.min(pageCount, Number(e.target.value))))}
+                  className="w-20 px-3 py-2 rounded-lg bg-[var(--color-bg-base)] border border-[var(--color-border-glass)] text-[var(--color-text-primary)] text-sm focus:border-[#667eea] focus:outline-none transition-colors"
+                />
+                <label className="text-sm text-[var(--color-text-secondary)]">pages</label>
+                <span className="text-xs text-[var(--color-text-muted)]">
+                  → {Math.ceil(pageCount / everyN)} files
+                </span>
+              </div>
+
+              {/* Pages Preview Grid Grouped by Chunk */}
+              <div className="space-y-4">
+                <p className="text-sm text-[var(--color-text-secondary)]">
+                  Preview of split files:
+                </p>
+                <div className="space-y-4">
+                  {(() => {
+                    const chunks = getEveryNChunks();
+                    const visibleChunks = showAllGroups ? chunks : chunks.slice(0, 6);
+                    
+                    return (
+                      <>
+                        {visibleChunks.map((chunk, chunkIndex) => {
+                          const pageRangeText = chunk.length === 1
+                            ? `Page ${chunk[0] + 1}`
+                            : `Pages ${chunk[0] + 1} to ${chunk[chunk.length - 1] + 1}`;
+                            
+                          return (
+                            <div key={chunkIndex} className="glass-card p-4 rounded-xl border border-[var(--color-border-glass)] space-y-3">
+                              <h4 className="text-sm font-semibold text-[var(--color-text-primary)]">
+                                File {chunkIndex + 1} ({pageRangeText})
+                              </h4>
+                              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                                {chunk.map((originalIndex) => {
+                                  const pageNum = originalIndex + 1;
+                                  return (
+                                    <PagePreviewCard
+                                      key={originalIndex.toString()}
+                                      doc={doc}
+                                      pageNum={pageNum}
+                                      isSelected={true}
+                                    />
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                        
+                        {chunks.length > 6 && (
+                          <div className="flex justify-center pt-2">
+                            <button
+                              type="button"
+                              onClick={() => setShowAllGroups(!showAllGroups)}
+                              className="px-4 py-2 rounded-lg text-sm font-medium bg-[var(--color-bg-base)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-surface-hover)] border border-[var(--color-border-glass)] transition-all duration-300 active:scale-95"
+                            >
+                              {showAllGroups ? "Show Less Previews" : `Show All Previews (${chunks.length} Files)`}
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
             </div>
           )}
 

@@ -111,17 +111,10 @@ export function EditPdfClient() {
   // Measure rendered canvas size for drawing overlay
   const [pageSize, setPageSize] = useState({ width: 500, height: 700 });
 
-  const updatePageSize = useCallback(() => {
-    if (containerRef.current) {
-      const canvas = containerRef.current.querySelector("canvas");
-      if (canvas) {
-        setPageSize({
-          width: canvas.width || 500,
-          height: canvas.height || 700,
-        });
-      }
-    }
-  }, []);
+  // Removed ResizeObserver since we now use PdfViewer's onRenderSuccess
+  useEffect(() => {
+    if (!pdfDoc) return;
+  }, [pdfDoc]);
 
   // Modal States
   const [isSigModalOpen, setIsSigModalOpen] = useState(false);
@@ -134,24 +127,7 @@ export function EditPdfClient() {
   const [downloadFilename, setDownloadFilename] = useState<string>('');
 
   // Auto-observe dimensions to align canvas drawing overlay
-  useEffect(() => {
-    if (!containerRef.current || !file) return;
-
-    updatePageSize(); // measure initially
-
-    const resizeObserver = new ResizeObserver(() => {
-      updatePageSize();
-    });
-
-    resizeObserver.observe(containerRef.current);
-
-    const canvas = containerRef.current.querySelector("canvas");
-    if (canvas) {
-      resizeObserver.observe(canvas);
-    }
-
-    return () => resizeObserver.disconnect();
-  }, [file, pageIndex, scale, pageRotations, updatePageSize]);
+  // Resize is handled dynamically via onRenderSuccess callback on PdfViewer
 
   // Handle file addition
   const handleFilesAdded = useCallback(async (files: PdfFile[]) => {
@@ -211,11 +187,14 @@ export function EditPdfClient() {
         const pdfY = item.transform[5];
         const fSize = Math.sqrt(item.transform[0] * item.transform[0] + item.transform[1] * item.transform[1]);
         
+        // Use raw item.width but ensure it scales properly if text matrix is scaled
+        const actualWidth = item.width;
+        
         return {
           str: item.str,
           x: pdfX,
           y: pdfY,
-          w: item.width,
+          w: actualWidth,
           h: fSize,
           fontSize: fSize,
           fontName: item.fontName || "",
@@ -228,7 +207,7 @@ export function EditPdfClient() {
       const mergedItems: typeof validItems = [];
       const sortedItems = [...validItems].sort((a, b) => {
         if (Math.abs(a.y - b.y) > 3) {
-          return b.y - a.y; // Top to bottom
+          return b.y - a.y; // Top to bottom (PDF Y increases upwards)
         }
         return a.x - b.x; // Left to right
       });
@@ -911,12 +890,12 @@ export function EditPdfClient() {
             )}
 
             {/* CENTRAL WORKSPACE: PDF CANVAS & VIEWPORT (col-span-7 or col-span-9 depending on sidebar) */}
-            <div className={`${isSidebarOpen ? "xl:col-span-7" : "xl:col-span-9"} flex flex-col p-4 bg-[#1f2937] rounded-3xl border border-[var(--color-border-glass)] shadow-2xl relative min-h-[750px] items-center justify-between`}>
+            <div className={`${isSidebarOpen ? "xl:col-span-7" : "xl:col-span-9"} flex flex-col p-2 sm:p-4 bg-[var(--color-bg-base)] rounded-3xl border border-[var(--color-border-glass)] shadow-sm relative min-h-[750px] items-center justify-between overflow-hidden`}>
               
               {/* Top Viewport Navigation */}
-              <div className="w-full flex items-center justify-between px-3 mb-3 border-b border-gray-700/50 pb-2">
-                <span className="text-xs text-gray-400 flex items-center gap-1">
-                  <AlertCircle className="w-3.5 h-3.5 text-indigo-400" />
+              <div className="w-full flex items-center justify-between px-3 mb-3 border-b border-[var(--color-border-glass)] pb-2">
+                <span className="text-xs text-[var(--color-text-muted)] flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
                   {tool === "edit-text" ? "Original PDF text boxes outline in blue. Double click to edit." : 
                    tool === "pencil" || tool === "highlight" ? "Brush active. Drag on page to draw." : 
                    tool === "add-text" ? "Click anywhere on page to place custom text." : 
@@ -926,37 +905,38 @@ export function EditPdfClient() {
 
               {/* Page Container Canvas Workspace */}
               <div 
-                className="flex-1 w-full flex items-center justify-center p-3 relative overflow-auto min-h-[600px]"
+                className="flex-1 w-full relative overflow-auto min-h-[600px] bg-slate-100 dark:bg-slate-900/40 rounded-2xl border border-slate-200 dark:border-slate-800/60"
                 onClick={() => setActiveObjectId(null)}
               >
                 {pdfDoc ? (
-                  <div
-                    className="flex items-center justify-center"
-                    style={{
-                      width: `${pageSize.width * scale}px`,
-                      height: `${pageSize.height * scale}px`,
-                      minWidth: `${pageSize.width * scale}px`,
-                      minHeight: `${pageSize.height * scale}px`,
-                    }}
-                  >
-                    <div 
-                      className="relative bg-white shadow-2xl flex items-center justify-center cursor-default transition-all origin-top-left"
+                  <div className="min-w-full min-h-full p-6 sm:p-10 flex">
+                    <div
+                      className="mx-auto"
                       style={{
-                        width: `${pageSize.width}px`,
-                        height: `${pageSize.height}px`,
-                        transform: `scale(${scale})`,
+                        width: `${pageSize.width * scale}px`,
+                        height: `${pageSize.height * scale}px`,
+                        flexShrink: 0
                       }}
-                      ref={containerRef}
-                      onClick={handlePageClick}
                     >
+                      <div 
+                        className="relative bg-white shadow-xl flex items-center justify-center cursor-default transition-transform origin-top-left"
+                        style={{
+                          width: `${pageSize.width}px`,
+                          height: `${pageSize.height}px`,
+                          transform: `scale(${scale})`,
+                        }}
+                        ref={containerRef}
+                        onClick={handlePageClick}
+                      >
                       {/* PDF Rendering Canvas */}
                       <PdfViewer
                         doc={pdfDoc}
                         pageNumber={pageIndex + 1}
-                        scale={1.2}
+                        scale={1.0}
                         rotation={pageRotations[pageIndex] || 0}
                         className=""
                         canvasClassName="max-w-none max-h-none"
+                        onRenderSuccess={(w, h) => setPageSize({ width: w, height: h })}
                       />
 
                     {/* Original Text Whiteout Layer */}
@@ -1003,6 +983,7 @@ export function EditPdfClient() {
 
                     </div>
                   </div>
+                </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center text-gray-400">
                     <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mb-3" />

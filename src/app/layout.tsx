@@ -15,6 +15,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
   title: {
     default: "PDFHome — Free Online PDF Editor | No Login Required",
     template: "%s | PDFHome",
@@ -82,7 +83,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.variable} suppressHydrationWarning>
+    <html lang="en" className={inter.variable} suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
         {/* Theme initialization (before paint to prevent flash) */}
         <script
@@ -120,7 +121,7 @@ export default function RootLayout({
         {/* Google AdSense */}
         <AdSenseScript />
       </head>
-      <body className="min-h-screen flex flex-col">
+      <body className="min-h-screen flex flex-col" suppressHydrationWarning>
         <ToastProvider>
           <AnalyticsProvider>
             <Header />

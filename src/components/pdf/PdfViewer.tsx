@@ -9,9 +9,19 @@ interface PdfViewerProps {
   scale?: number;
   rotation?: number;
   className?: string;
+  canvasClassName?: string;
+  onRenderSuccess?: (width: number, height: number) => void;
 }
 
-export function PdfViewer({ doc, pageNumber, scale = 1, rotation = 0, className = "" }: PdfViewerProps) {
+export function PdfViewer({ 
+  doc, 
+  pageNumber, 
+  scale = 1, 
+  rotation = 0, 
+  className = "",
+  canvasClassName = "",
+  onRenderSuccess
+}: PdfViewerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isRendered, setIsRendered] = useState(false);
 
@@ -46,7 +56,12 @@ export function PdfViewer({ doc, pageNumber, scale = 1, rotation = 0, className 
 
         renderTask = page.render(renderContext);
         await renderTask.promise;
-        if (isSubscribed) setIsRendered(true);
+        if (isSubscribed) {
+          setIsRendered(true);
+          if (onRenderSuccess) {
+            onRenderSuccess(viewport.width, viewport.height);
+          }
+        }
       } catch (err) {
         if ((err as Error)?.name === "RenderingCancelledException") {
           // Task cancelled, ignore
@@ -70,7 +85,7 @@ export function PdfViewer({ doc, pageNumber, scale = 1, rotation = 0, className 
     <div className={`relative flex items-center justify-center overflow-hidden bg-white/5 ${className}`}>
       <canvas
         ref={canvasRef}
-        className={`max-w-full max-h-full transition-opacity duration-300 ${isRendered ? 'opacity-100' : 'opacity-0'}`}
+        className={`${canvasClassName || "max-w-full max-h-full"} transition-opacity duration-300 ${isRendered ? 'opacity-100' : 'opacity-0'}`}
       />
       {!isRendered && (
         <div className="absolute inset-0 flex items-center justify-center">

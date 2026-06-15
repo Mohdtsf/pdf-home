@@ -185,7 +185,7 @@ export function SignPdfClient() {
 
       if (signatureMode === "digital") {
         const formData = new FormData();
-        formData.append("file", new File([result], "signed.pdf", { type: "application/pdf" }));
+        formData.append("file", new File([result as any], "signed.pdf", { type: "application/pdf" }));
         
         const response = await fetch("/api/sign-digital", {
           method: "POST",

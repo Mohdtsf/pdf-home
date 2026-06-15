@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
     // Sign the PDF
     const signedPdf = await signpdf.sign(pdfBuffer, signer);
 
-    return new NextResponse(signedPdf, {
+    return new NextResponse(signedPdf as any, {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",

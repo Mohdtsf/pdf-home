@@ -5,7 +5,7 @@ export function HeroSection() {
   return (
     <section className="aurora-bg relative py-20 md:py-32 px-4">
       <div className="relative z-10 mx-auto max-w-4xl text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200/60 bg-white/80 backdrop-blur-md shadow-sm mb-8">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[var(--color-border-glass)] bg-[var(--glass-bg)] backdrop-blur-md shadow-sm mb-8">
           <Zap className="w-4 h-4 text-yellow-400" />
           <span className="text-sm text-[var(--color-text-secondary)]">
             100% Free • No Signup • Privacy First

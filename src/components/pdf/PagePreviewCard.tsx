@@ -5,7 +5,7 @@ import type { PDFDocumentProxy } from "pdfjs-dist";
 import type { ReactNode } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical } from "lucide-react";
+import { GripVertical, Check } from "lucide-react";
 
 interface PagePreviewCardProps {
   id?: string;
@@ -30,8 +30,8 @@ export function PagePreviewCard({
 }: PagePreviewCardProps) {
   // Combine selection and highlighting logic for styling
   const activeStyle = isSelected || isHighlighted 
-    ? "border-[#667eea] shadow-[0_0_15px_rgba(102,126,234,0.15)] bg-indigo-50/50" 
-    : "border-slate-200/80 bg-white/60 backdrop-blur-md shadow-sm hover:bg-white hover:border-slate-300";
+    ? "!border-[#667eea] !ring-2 !ring-[#667eea]/20 shadow-[0_0_15px_rgba(102,126,234,0.15)] !bg-indigo-50/5 dark:!bg-indigo-950/20" 
+    : "!border-[var(--color-border-glass)] !bg-[var(--glass-bg)] hover:!bg-[var(--glass-bg-hover)]";
 
   const {
     attributes,
@@ -60,6 +60,16 @@ export function PagePreviewCard({
         isDragging ? "ring-2 ring-indigo-500/50 shadow-2xl scale-105" : ""
       }`}
     >
+      {/* Checkbox Badge */}
+      {(onClick || isSelected) && (
+        <div className={`absolute top-4 left-4 z-10 flex h-6 w-6 items-center justify-center rounded-full border transition-all duration-300 ${
+          isSelected 
+            ? "bg-gradient-to-r from-[#667eea] to-[#764ba2] border-transparent text-white shadow-md scale-100 opacity-100" 
+            : "bg-white/80 dark:bg-slate-800/80 border-slate-300 dark:border-slate-600 text-transparent opacity-0 group-hover:opacity-100 scale-90 hover:scale-100"
+        }`}>
+          <Check className="w-3 h-3 stroke-[3]" />
+        </div>
+      )}
       <div className="aspect-[3/4] bg-slate-50 rounded-lg flex items-center justify-center overflow-hidden pointer-events-none mb-3 border border-slate-100 group-hover:border-slate-200 transition-colors relative">
         {doc ? (
           <PdfViewer doc={doc} pageNumber={pageNum} scale={1} rotation={rotation} className="w-full h-full object-contain" />

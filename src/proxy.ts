@@ -5,7 +5,7 @@ import type { NextRequest } from "next/server";
  * Security middleware that adds protective headers to all responses.
  * Prevents XSS, clickjacking, MIME sniffing, and other common attacks.
  */
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const response = NextResponse.next();
 
   // Prevent clickjacking
