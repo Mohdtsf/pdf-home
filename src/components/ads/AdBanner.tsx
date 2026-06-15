@@ -44,9 +44,11 @@ export function AdBanner({
   if (!isProduction || !clientId) {
     return (
       <div
-        className={`flex items-center justify-center rounded-xl border-2 border-dashed border-[var(--color-border-glass)] bg-[var(--color-bg-surface)] text-[var(--color-text-muted)] text-xs py-6 ${className}`}
+        className={`flex items-center justify-center rounded-xl border-2 border-dashed border-[var(--color-border-glass)] bg-[var(--color-bg-base)] text-[var(--color-text-muted)] text-sm py-8 ${className}`}
       >
-        <span>📢 Ad Space — will show when AdSense is configured</span>
+        <span className="flex items-center gap-2">
+          <span className="text-lg">📢</span> Ad Space — will show when AdSense is configured
+        </span>
       </div>
     );
   }

@@ -30,8 +30,8 @@ export function PreDownloadAd({ onComplete, onCancel }: PreDownloadAdProps) {
   if (typeof document === "undefined") return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl relative text-[var(--color-text-primary)]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+      <div className="bg-[var(--color-bg-surface)] backdrop-blur-xl border border-[var(--color-border-glass)] rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl relative text-[var(--color-text-primary)]">
         <button 
           onClick={onCancel}
           className="absolute top-4 right-4 p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] rounded-full hover:bg-[var(--color-bg-surface-hover)] transition-colors"

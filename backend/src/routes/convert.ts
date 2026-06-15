@@ -18,9 +18,19 @@ export default async function convertRoutes(app: FastifyInstance) {
     // However, @fastify/multipart handles fields iteratively. For simplicity, we can default to 'docx' if not provided
     // or parse it from data.fields.
     let targetFormat = 'docx';
+    let useOcr = false;
+    let language = 'eng';
     if (data.fields.targetFormat) {
       // @ts-ignore
       targetFormat = data.fields.targetFormat.value;
+    }
+    if (data.fields.useOcr) {
+      // @ts-ignore
+      useOcr = data.fields.useOcr.value === 'true';
+    }
+    if (data.fields.language) {
+      // @ts-ignore
+      language = data.fields.language.value;
     }
 
     const fileId = uuidv4();
@@ -36,6 +46,8 @@ export default async function convertRoutes(app: FastifyInstance) {
       filename,
       uploadPath,
       targetFormat,
+      useOcr,
+      language,
     });
 
     return { jobId: job.id };
